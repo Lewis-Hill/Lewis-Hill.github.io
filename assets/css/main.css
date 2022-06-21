@@ -2457,10 +2457,6 @@ input, select, textarea {
 			display: block;
 			margin: auto;
 			width: 100%;
-			padding-top: 4em;
-    		padding-right: 4em;
-    		padding-bottom: 2em;
-    		padding-left: 4em;
 		}
 
 			.image.main img {
