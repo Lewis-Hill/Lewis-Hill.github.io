@@ -93,7 +93,7 @@ input::-moz-focus-inner {
   .modal-content {
 	margin: auto;
 	display: block;
-	width: 95%;
+	width: 90%;
 	max-width: 2000px;
   }
   
