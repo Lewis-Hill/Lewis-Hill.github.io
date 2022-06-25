@@ -3,25 +3,19 @@
 	html5up.net | @ajlkn
 	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
 */
-(function($) {
 
-	var	$window = $(window),
-		$body = $('body'),
-		$header = $('#header'),
-		$banner = $('#banner');
-
-		let slideIndex = 1;
+let slideIndex = 1;
 showSlides(slideIndex);
 
 // Next/previous controls
-plusSlides(n) ({
+function plusSlides(n) {
   showSlides(slideIndex += n);
-});
+}
 
 // Thumbnail image controls
-currentSlide(n) ({
+function currentSlide(n) {
   showSlides(slideIndex = n);
-});
+}
 
 function showSlides(n) {
   let i;
@@ -38,6 +32,14 @@ function showSlides(n) {
   slides[slideIndex-1].style.display = "block";
   dots[slideIndex-1].className += " active";
 }
+
+(function($) {
+
+	var	$window = $(window),
+		$body = $('body'),
+		$header = $('#header'),
+		$banner = $('#banner');
+
 	// Breakpoints.
 		breakpoints({
 			xlarge:	'(max-width: 1680px)',
