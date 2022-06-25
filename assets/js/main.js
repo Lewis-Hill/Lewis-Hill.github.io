@@ -16,16 +16,16 @@
 		showSlides(slideIndex);
 		
 		// Next/previous controls
-		function plusSlides(n) {
+		plusSlides(n) {
 		  showSlides(slideIndex += n);
 		}
 		
 		// Thumbnail image controls
-		function currentSlide(n) {
+		currentSlide(n) {
 		  showSlides(slideIndex = n);
 		}
 		
-		function showSlides(n) {
+		showSlides(n) {
 		  let i;
 		  let slides = document.getElementsByClassName("mySlides");
 		  let dots = document.getElementsByClassName("dot");
@@ -40,7 +40,7 @@
 		  slides[slideIndex-1].style.display = "block";
 		  dots[slideIndex-1].className += " active";
 		}
-		
+
 	// Breakpoints.
 		breakpoints({
 			xlarge:	'(max-width: 1680px)',
