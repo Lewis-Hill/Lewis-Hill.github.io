@@ -121,7 +121,7 @@ input::-moz-focus-inner {
   }
   
   /* The Close Button */
-  .close {
+  .closed {
 	position: absolute;
 	top: 100px;
 	right: 35px;
@@ -131,8 +131,8 @@ input::-moz-focus-inner {
 	transition: 0.3s;
   }
   
-  .close:hover,
-  .close:focus {
+  .closed:hover,
+  .closed:focus {
 	color: #bbb;
 	text-decoration: none;
 	cursor: pointer;

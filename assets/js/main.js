@@ -4,7 +4,7 @@
 	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
 */
 
-/*let slideIndex = 1;
+let slideIndex = 1;
 showSlides(slideIndex);
 
 // Next/previous controls
@@ -32,12 +32,11 @@ function showSlides(n) {
   slides[slideIndex-1].style.display = "block";
   dots[slideIndex-1].className += " active";
 }
-*/
 
 
 (function($) {
 
-/*	// Get the modal
+// Get the modal
 var modal = document.getElementById("myModal");
 // to all images -- note I'm using a class!
 var images = document.getElementsByClassName('myImages');
@@ -59,13 +58,12 @@ for (var i = 0; i < images.length; i++) {
   }
 
   // Get the <span> element that closes the modal
-var span = document.getElementsByClassName("close")[0];
+var span = document.getElementsByClassName("closed")[0];
 
 // When the user clicks on <span> (x), close the modal
 span.onclick = function() {
   modal.style.display = "none";
 }
-*/
   
 	var	$window = $(window),
 		$body = $('body'),
