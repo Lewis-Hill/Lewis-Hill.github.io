@@ -143,16 +143,16 @@
 							<header id="draganddrop">
 								<br>
 								<div class="inner">
-									<h2>Functionality</h2>
+									<h2>Drag and Drop items</h2>
 								</div>
 							</header>
-							<video class="image main" controls src="images/InventoryFunctionalityFinal.mp4"></video>
+							<video class="image main" controls src="images/InventoryDragAndDrop.mp4"></video>
 							<div class="inner">
 
-								<h3 class="major">Adding items to inventory</h3>
+								<h3 class="major">Dragging an item using the Mouse</h3>
 								<p>After picking up an item using the Interact Interface, the function AddToInventory is called on the Player's Inventory Component. The Data Structure attached to the Item tells the function all the attributes the slot should have. If the Item already exists in the Player's Inventory, it checks to see if the picked up item can be added to an existing slot. If not, a new slot is created for that item.</p>
 
-								<h3 class="major">Toggling the Inventory</h3>
+								<h3 class="major">Dropping an item</h3>
 								<p>The ToggleInventory function deals with any situation where the Inventory is opened or closed, and creates or removes the Inventory UI as appropriate. This covers situations where a chest is interacted with and both Player and Chest inventories are opened, pressing Tab to open the Player Inventory, or pressingthe "X" button to close any Inventory. There is a bool called "IsTransferInventory" to tell the function if there is another inventory to close other than the Player's.</p>
 
 								<!-- Slideshow container -->
@@ -160,33 +160,27 @@
 
 									<!-- Full-width images with number and caption text -->
 									<div class="mySlides fade">
-									<div class="numbertext">1 / 5</div>
-									<img class="myImages" id="myImg" src="images/Screenshots/Functionality/SlotStructure.png" alt="This structure is used to give Items and Inventory Slots their attributes" style="width:100%">
-									<div class="text">This structure is used to give Items and Inventory Slots their attributes</div>
+									<div class="numbertext">1 / 4</div>
+									<img class="myImages" id="myImg" src="images/Screenshots/DragandDrop/OnDragDetected.png" alt="This structure is used to give Items and Inventory Slots their attributes" style="width:100%">
+									<div class="text">The Drag UI is created and the DragDrop operation starts</div>
 									</div>
 								
 									<div class="mySlides fade">
-									<div class="numbertext">2 / 5</div>
-									<img class="myImages" id="myImg" src="images/Screenshots/Functionality/AddToInventory.png" alt="When an Item is picked up, this function is called" style="width:100%">
-									<div class="text">When an Item is picked up, this function is called</div>
+									<div class="numbertext">2 / 4</div>
+									<img class="myImages" id="myImg" src="images/Screenshots/DragandDrop/OnDrop.png" alt="When an Item is picked up, this function is called" style="width:100%">
+									<div class="text">All the possibilities for when an item is dropped on a slot</div>
 									</div>
 								
 									<div class="mySlides fade">
-									<div class="numbertext">3 / 5</div>
-									<img class="myImages" id="myImg" src="images/Screenshots/Functionality/CreateStack.png" alt="As part of the Add To Inventory Function, this creates a new slot for the item" style="width:100%">
-									<div class="text">As part of the "Add To Inventory" Function, this creates a new slot for the item</div>
+									<div class="numbertext">3 / 4</div>
+									<img class="myImages" id="myImg" src="images/Screenshots/DragandDrop/OnDragCancelled.png" alt="As part of the Add To Inventory Function, this creates a new slot for the item" style="width:100%">
+									<div class="text">The DragDrop operation is cancelled and the original slot is reverted back</div>
 									</div>
 
 									<div class="mySlides fade">
-									<div class="numbertext">4 / 5</div>
-									<img class="myImages" id="myImg" src="images/Screenshots/Functionality/AddToStack.png" alt="As part of the Add To Inventory Function, this adds to an existing slot" style="width:100%">
-									<div class="text">As part of the "Add To Inventory" Function, this adds to an existing slot</div>
-									</div>
-									
-									<div class="mySlides fade">
-									<div class="numbertext">5 / 5</div>
-									<img class="myImages" id="myImg" src="images/Screenshots/Functionality/ToggleInventory.png" alt="This function removes or creates the Inventory" style="width:100%">
-									<div class="text">This function removes or creates the Inventory</div>
+									<div class="numbertext">4 / 4</div>
+									<img class="myImages" id="myImg" src="images/Screenshots/DragandDrop/InventoryElements.png" alt="As part of the Add To Inventory Function, this adds to an existing slot" style="width:100%">
+									<div class="text">The blueprints that make up the Inventory UI aswell as the DragDrop operation</div>
 									</div>
 								
 									<!-- Next and previous buttons -->
@@ -201,7 +195,6 @@
 									<span class="dot" onclick="currentSlide(2)"></span>
 									<span class="dot" onclick="currentSlide(3)"></span>
 									<span class="dot" onclick="currentSlide(4)"></span>
-									<span class="dot" onclick="currentSlide(5)"></span>
 								</div>
 								
 							</div>
