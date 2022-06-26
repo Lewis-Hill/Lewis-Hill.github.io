@@ -155,14 +155,9 @@ input::-moz-focus-inner {
 }
 
 /* Hide the images by default */
-.mySlides {
+.mySlides, .mySlides2, .mySlides3 {
   display: none;
 }
-
-/* Hide the images by default */
-.mySlides2 {
-	display: none;
-  }
 
 /* Next & previous buttons */
 .prev, .next {
