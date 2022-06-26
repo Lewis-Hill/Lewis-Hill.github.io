@@ -266,39 +266,33 @@
 							<video class="image main" controls src="images/InventoryQuest.mp4"></video>
 							<div class="inner">
 
-								<h3 class="major">Creating quests
+								<h3 class="major">Accepting quests
 								</h3>
-								<p>When the mouse is held on a slot, that slot creates a DragDrop operation and the Drag UI icon which takes the attributes of the item. The original slot is wiped to make the dragging more convincing. The DragDrop operation also takes the Structure attributes from the specific slot as an Input variable, so that it knows how to transfer the item when it is dropped on</p>
+								<p>Upon clicking the "Accept Quest" button on an NPC that has a Quest, all other Quests are put on hold and the Quest becomes active. The NPC asks the Player for an Item that can be placed in their Inventory. The Quest Item is a Structure variable that can be set in the Editor. </p>
 
 								<h3 class="major">Updating status and delivering rewards</h3>
-								<p>The ToggleInventory function deals with any situation where the Inventory is opened or closed, and creates or removes the Inventory UI as appropriate. This covers situations where a chest is interacted with and both Player and Chest inventories are opened, pressing Tab to open the Player Inventory, or pressingthe "X" button to close any Inventory. There is a bool called "IsTransferInventory" to tell the function if there is another inventory to close other than the Player's.</p>
-
+								<p>Depending on the item placed in the NPC's Inventory, the status of the Quest is updated in that NPC's Inventory and on the Player's HUD, and the Quest Status Text (How many of the items have been donated) will be updated appropriately for which Item was given. </p>
+								<p>When the Quest requirements have been met, the Player can click the "Hand In Quest" button to complete the Quest and receive a new Inventory Slot as a reward. The Quest Status Text is again updated and the NPC will no longer offer a Quest.</p>
 								<!-- Slideshow container -->
 								<div class="slideshow-container">
 
 									<!-- Full-width images with number and caption text -->
 									<div class="mySlides4 fade">
-									<div class="numbertext">1 / 4</div>
-									<img class="myImages" id="myImg" src="images/Screenshots/DragandDrop/OnDragDetected.png" alt="This structure is used to give Items and Inventory Slots their attributes" style="width:100%">
-									<div class="text">The Drag UI is created and the DragDrop operation starts</div>
+									<div class="numbertext">1 / 3</div>
+									<img class="myImages" id="myImg" src="images/Screenshots/Quests/AcceptQuest.png" alt="Process of starting the quest by clicking the Accept Quest button" style="width:100%">
+									<div class="text">Process of starting the quest by clicking the Accept Quest button</div>
 									</div>
 								
 									<div class="mySlides4 fade">
-									<div class="numbertext">2 / 4</div>
-									<img class="myImages" id="myImg" src="images/Screenshots/DragandDrop/OnDrop.png" alt="When an Item is picked up, this function is called" style="width:100%">
-									<div class="text">All the possibilities for when an item is dropped on a slot</div>
+									<div class="numbertext">2 / 3</div>
+									<img class="myImages" id="myImg" src="images/Screenshots/Quests/QuestHandIn.png" alt="Process of ending the quest by clicking the Hand In Quest button" style="width:100%">
+									<div class="text">Process of ending the quest by clicking the Hand In Quest button</div>
 									</div>
 								
 									<div class="mySlides4 fade">
-									<div class="numbertext">3 / 4</div>
-									<img class="myImages" id="myImg" src="images/Screenshots/DragandDrop/OnDragCancelled.png" alt="As part of the Add To Inventory Function, this creates a new slot for the item" style="width:100%">
-									<div class="text">The DragDrop operation is cancelled and the original slot is reverted back</div>
-									</div>
-
-									<div class="mySlides4 fade">
-									<div class="numbertext">4 / 4</div>
-									<img class="myImages" id="myImg" src="images/Screenshots/DragandDrop/InventoryElements.png" alt="As part of the Add To Inventory Function, this adds to an existing slot" style="width:100%">
-									<div class="text">The blueprints that make up the Inventory UI aswell as the DragDrop operation</div>
+									<div class="numbertext">3 / 3</div>
+									<img class="myImages" id="myImg" src="images/Screenshots/Quests/UpdateQuestText.png" alt="Updating the Quest Text for every scenario" style="width:100%">
+									<div class="text">Updating the Quest Text for every scenario</div>
 									</div>
 								
 									<!-- Next and previous buttons -->
@@ -312,7 +306,6 @@
 									<span class="dot4" onclick="currentSlide4(1)"></span>
 									<span class="dot4" onclick="currentSlide4(2)"></span>
 									<span class="dot4" onclick="currentSlide4(3)"></span>
-									<span class="dot4" onclick="currentSlide4(4)"></span>
 								</div>
 								<a href="#Top" class="button primary">Jump to top</a>
 							</div>
