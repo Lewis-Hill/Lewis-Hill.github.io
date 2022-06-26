@@ -159,6 +159,11 @@ input::-moz-focus-inner {
   display: none;
 }
 
+/* Hide the images by default */
+.mySlides2 {
+	display: none;
+  }
+
 /* Next & previous buttons */
 .prev, .next {
   cursor: pointer;
