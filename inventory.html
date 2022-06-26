@@ -60,7 +60,7 @@
 										<a href="#draganddrop" class="button primary">Drag and Drop</a>
 									</li>
 									<li>
-										<a href="#Functionality" class="button primary">NPCs and Chests</a>
+										<a href="#chests" class="button primary">NPCs and Chests</a>
 									</li>
 									<li>
 										<a href="#Functionality" class="button primary">Quest System</a>
@@ -197,6 +197,68 @@
 									<span class="dot2" onclick="currentSlide2(2)"></span>
 									<span class="dot2" onclick="currentSlide2(3)"></span>
 									<span class="dot2" onclick="currentSlide2(4)"></span>
+								</div>
+								<a href="#Top" class="button primary">Jump to top</a>
+							</div>
+						</div>
+
+						<!-- NPC and Chests -->
+						<div class="wrapper alt style">
+							<header id="chests">
+								<br>
+								<div class="inner">
+									<h2>NPCs and Chests</h2>
+								</div>
+							</header>
+							<video class="image main" controls src="images/InventoryDragAndDrop.mp4"></video>
+							<div class="inner">
+
+								<h3 class="major">Dragging an item using the Mouse</h3>
+								<p>When the mouse is held on a slot, that slot creates a DragDrop operation and the Drag UI icon which takes the attributes of the item. The original slot is wiped to make the dragging more convincing. The DragDrop operation also takes the Structure attributes from the specific slot as an Input variable, so that it knows how to transfer the item when it is dropped on</p>
+
+								<h3 class="major">Dropping an item</h3>
+								<p>The ToggleInventory function deals with any situation where the Inventory is opened or closed, and creates or removes the Inventory UI as appropriate. This covers situations where a chest is interacted with and both Player and Chest inventories are opened, pressing Tab to open the Player Inventory, or pressingthe "X" button to close any Inventory. There is a bool called "IsTransferInventory" to tell the function if there is another inventory to close other than the Player's.</p>
+
+								<!-- Slideshow container -->
+								<div class="slideshow-container">
+
+									<!-- Full-width images with number and caption text -->
+									<div class="mySlides3 fade">
+									<div class="numbertext">1 / 4</div>
+									<img class="myImages" id="myImg" src="images/Screenshots/DragandDrop/OnDragDetected.png" alt="This structure is used to give Items and Inventory Slots their attributes" style="width:100%">
+									<div class="text">The Drag UI is created and the DragDrop operation starts</div>
+									</div>
+								
+									<div class="mySlides3 fade">
+									<div class="numbertext">2 / 4</div>
+									<img class="myImages" id="myImg" src="images/Screenshots/DragandDrop/OnDrop.png" alt="When an Item is picked up, this function is called" style="width:100%">
+									<div class="text">All the possibilities for when an item is dropped on a slot</div>
+									</div>
+								
+									<div class="mySlides3 fade">
+									<div class="numbertext">3 / 4</div>
+									<img class="myImages" id="myImg" src="images/Screenshots/DragandDrop/OnDragCancelled.png" alt="As part of the Add To Inventory Function, this creates a new slot for the item" style="width:100%">
+									<div class="text">The DragDrop operation is cancelled and the original slot is reverted back</div>
+									</div>
+
+									<div class="mySlides3 fade">
+									<div class="numbertext">4 / 4</div>
+									<img class="myImages" id="myImg" src="images/Screenshots/DragandDrop/InventoryElements.png" alt="As part of the Add To Inventory Function, this adds to an existing slot" style="width:100%">
+									<div class="text">The blueprints that make up the Inventory UI aswell as the DragDrop operation</div>
+									</div>
+								
+									<!-- Next and previous buttons -->
+									<a class="prev" onclick="plusSlides3(-1)">&#10094;</a>
+									<a class="next" onclick="plusSlides3(1)">&#10095;</a>
+								</div>
+								<br>
+								
+								<!-- The dots/circles -->
+								<div style="text-align:center">
+									<span class="dot3" onclick="currentSlide3(1)"></span>
+									<span class="dot3" onclick="currentSlide3(3)"></span>
+									<span class="dot3" onclick="currentSlide3(3)"></span>
+									<span class="dot3" onclick="currentSlide3(4)"></span>
 								</div>
 								<a href="#Top" class="button primary">Jump to top</a>
 							</div>
