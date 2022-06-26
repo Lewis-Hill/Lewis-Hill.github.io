@@ -207,7 +207,7 @@ input::-moz-focus-inner {
 }
 
 /* The dots/bullets/indicators */
-.dot, .dot2, .dot3 {
+.dot, .dot2, .dot3, .dot4 {
   cursor: pointer;
   height: 15px;
   width: 15px;
@@ -218,7 +218,7 @@ input::-moz-focus-inner {
   transition: background-color 0.6s ease;
 }
 
-.active, .dot:hover, .dot2:hover, .dot3:hover {
+.active, .dot:hover, .dot2:hover, .dot3:hover, .dot4:hover {
   background-color: #717171;
 }
 
