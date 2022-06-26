@@ -155,7 +155,7 @@ input::-moz-focus-inner {
 }
 
 /* Hide the images by default */
-.mySlides, .mySlides2, .mySlides3 {
+.mySlides, .mySlides2, .mySlides3, .mySlides4 {
   display: none;
 }
 
