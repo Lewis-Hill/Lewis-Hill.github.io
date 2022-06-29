@@ -201,7 +201,6 @@ input::-moz-focus-inner {
 	-webkit-justify-content: center;
 	-ms-justify-content: center;
 	justify-content: center;
-	width: 100%;
 	margin-left: 0;
   }
 
