@@ -3093,7 +3093,7 @@ input, select, textarea {
 		height: 3.75em;
 		letter-spacing: 0.1em;
 		line-height: 3.75em;
-		padding: 2.25em 2.25em;
+		padding: 0 2.25em;
 		text-align: center;
 		text-decoration: none;
 		text-transform: uppercase;
