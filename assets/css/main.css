@@ -196,6 +196,10 @@ input::-moz-focus-inner {
 	margin: 0 0 2em 0;
   }
 
+  .centerbutton {
+	justify-content: center;
+  }
+
 /* Next & previous buttons */
 .prev, .next {
   cursor: pointer;
