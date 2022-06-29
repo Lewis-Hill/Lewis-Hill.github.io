@@ -201,6 +201,7 @@ input::-moz-focus-inner {
 	-webkit-justify-content: center;
 	-ms-justify-content: center;
 	justify-content: center;
+	margin-left: 0;
   }
 
 /* Next & previous buttons */
