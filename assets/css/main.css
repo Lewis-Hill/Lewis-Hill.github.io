@@ -197,7 +197,12 @@ input::-moz-focus-inner {
   }
 
   .centerbutton {
+	-moz-justify-content: center;
+	-webkit-justify-content: center;
+	-ms-justify-content: center;
 	justify-content: center;
+	width: 100%;
+	margin-left: 0;
   }
 
 /* Next & previous buttons */
