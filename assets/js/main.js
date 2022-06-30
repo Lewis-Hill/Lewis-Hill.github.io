@@ -143,6 +143,22 @@
 
 			});
 
+			var coll = document.getElementsByClassName("button");
+
+			var i;
+
+			for (i = 0; i < coll.length; i++) {
+			coll[i].addEventListener("click", function() {
+				this.classList.toggle("active");
+				var content = this.nextElementSibling;
+				if (content.style.display === "block") {
+				content.style.display = "none";
+				} else {
+				content.style.display = "block";
+				}
+			});
+			}
+
 			// Get the modal
 			var modal = document.getElementById("myModal");
 			// to all images -- note I'm using a class!
@@ -170,22 +186,6 @@
 			// When the user clicks on <span> (x), close the modal
 			span.onclick = function() {
 			modal.style.display = "none";
-			}
-
-			var coll = document.getElementsByClassName("button");
-
-			var i;
-
-			for (i = 0; i < coll.length; i++) {
-			coll[i].addEventListener("click", function() {
-				this.classList.toggle("active");
-				var content = this.nextElementSibling;
-				if (content.style.display === "block") {
-				content.style.display = "none";
-				} else {
-				content.style.display = "block";
-				}
-			});
 			}
 
 })(jQuery);
