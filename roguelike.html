@@ -43,7 +43,7 @@
 					<section id="wrapper">
 						<header id="Top">
 							<div class="inner">
-								<h2 class="align-center">Roguelike 2D Game</h2>
+								<h2 class="align-center">Roguelike 2D Game (Unity C#)</h2>
 								<p class="align-center">This game combines the Roguelike genre with card game elements to create a challenging and unique experience. The Reincarnation mechanic makes the Player think in creative ways to get their health to 0. Procedural level generation means you never get the same layout twice. </p>
 								<ul class="actions special">
 									<li>
@@ -73,15 +73,15 @@
 							<header id="Movement">
 								<br>
 								<div class="inner">
-									<h2><u>Functionality</u></h2>
+									<h2><u>Movement and Camera</u></h2>
 								</div>
 							</header>
 							<div class="inner">
 								<video class="image left" controls src="images/InventoryFunctionalityFinal.mp4"></video>			
-								<h3 class="major">Adding items to inventory</h3>
+								<h3 class="major">Movement</h3>
 								<p>After picking up an item using the Interact Interface, the function AddToInventory is called on the Player's Inventory Component. The Data Structure attached to the Item tells the function all the attributes the slot should have. If the Item already exists in the Player's Inventory, it checks to see if the picked up item can be added to an existing slot. If not, a new slot is created for that item.</p>
 
-								<h3 class="major">Toggling the Inventory</h3>
+								<h3 class="major">Camera</h3>
 								<p>The ToggleInventory function deals with any situation where the Inventory is opened or closed, and creates or removes the Inventory UI as appropriate. This covers situations where a chest is interacted with and both Player and Chest inventories are opened, pressing Tab to open the Player Inventory, or pressingthe "X" button to close any Inventory. There is a bool called "IsTransferInventory" to tell the function if there is another inventory to close other than the Player's.</p>
 
 								<ul class="actions">
@@ -113,7 +113,7 @@
 							<header id="Procedural">
 								<br>
 								<div class="inner">
-									<h2><u>Drag and Drop items</u></h2>
+									<h2><u>Procedural Level Generation</u></h2>
 								</div>
 							</header>
 							<div class="inner">
@@ -134,12 +134,17 @@
 							<header id="Reincarnation">
 								<br>
 								<div class="inner">
-									<h2><u>NPCs and Chests</u></h2>
+									<h2><u>Reincarnation mechanic and card elements</u></h2>
 								</div>
 							</header>
 							<div class="inner">
 
-								<h3 class="major">Easy to create
+								<h3 class="major">Reincarnation
+								</h3>
+								<p>I made creating new objects such as Chests and NPCs, with their own Inventory, as simple as creating a child class of the "Container" Blueprint, which comes with its own Inventory Component. From there, you just give it a new static mesh, choose the name of the Container and decide how many slots the Inventory will have.</p>
+								<p>Once set in the level, you can easily add the items that will start off in the Containers. You can also choose whether it will have a Quest for the Player (For NPCs), and set the Item the Player will need to donate for the Quest, and how many.</p>
+
+								<h3 class="major">Getting stronger with cards
 								</h3>
 								<p>I made creating new objects such as Chests and NPCs, with their own Inventory, as simple as creating a child class of the "Container" Blueprint, which comes with its own Inventory Component. From there, you just give it a new static mesh, choose the name of the Container and decide how many slots the Inventory will have.</p>
 								<p>Once set in the level, you can easily add the items that will start off in the Containers. You can also choose whether it will have a Quest for the Player (For NPCs), and set the Item the Player will need to donate for the Quest, and how many.</p>
@@ -172,18 +177,14 @@
 							<header id="Enemies">
 								<br>
 								<div class="inner">
-									<h2><u>Quest System</u></h2>
+									<h2><u>Enemies</u></h2>
 								</div>
 							</header>
 							<div class="inner">
 								<video class="image left" controls src="images/InventoryQuest.mp4"></video>		
-								<h3 class="major">Accepting quests
+								<h3 class="major">Enemy behaviour
 								</h3>
 								<p>Upon clicking the "Accept Quest" button on an NPC that has a Quest, all other Quests are put on hold and the Quest becomes active. The NPC asks the Player for an Item that can be placed in their Inventory. The Quest Item is a Structure variable that can be set in the Editor. </p>
-
-								<h3 class="major">Updating status and delivering rewards</h3>
-								<p>Depending on the item placed in the NPC's Inventory, the status of the Quest is updated in that NPC's Inventory and on the Player's HUD, and the Quest Status Text (How many of the items have been donated) will be updated appropriately for which Item was given. </p>
-								<p>When the Quest requirements have been met, the Player can click the "Hand In Quest" button to complete the Quest and receive a new Inventory Slot as a reward. The Quest Status Text is again updated and the NPC will no longer offer a Quest.</p>
 								
 								<ul class="actions">
 									<li>
