@@ -6,7 +6,7 @@
 -->
 <html>
 	<head>
-		<title>Generic - Solid State by HTML5 UP</title>
+		<title>Inventory System</title>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 		<link rel="stylesheet" href="assets/css/main.css" />
@@ -14,12 +14,19 @@
 	</head>
 	<body class="is-preload">
 
+<!-- The Modal -->
+<div id="myModal" class="modal">
+	<span class="closed">&times;</span>
+	<img class="modal-content" id="img01">
+	<div id="caption"></div>
+  </div>
+
 		<!-- Page Wrapper -->
 			<div id="page-wrapper">
 
 				<!-- Header -->
 					<header id="header">
-						<h1><a href="index.html">Solid State</a></h1>
+						<h1><a href="index.html">Lewis Hill</a></h1>
 						<nav>
 							<a href="#menu">Menu</a>
 						</nav>
@@ -31,10 +38,9 @@
 							<h2>Menu</h2>
 							<ul class="links">
 								<li><a href="index.html">Home</a></li>
-								<li><a href="generic.html">Generic</a></li>
-								<li><a href="elements.html">Elements</a></li>
-								<li><a href="#">Log In</a></li>
-								<li><a href="#">Sign Up</a></li>
+								<li><a href="inventory.html">Inventory System</a></li>
+								<li><a href="roguelike.html">Procedural Roguelike</a></li>
+								<li><a href="gamejam.html">Climax Game Jam</a></li>
 							</ul>
 							<a href="#" class="close">Close</a>
 						</div>
@@ -42,84 +48,181 @@
 
 				<!-- Wrapper -->
 					<section id="wrapper">
-						<header>
+						<header id="Top">
 							<div class="inner">
-								<h2>Generic</h2>
-								<p>Phasellus non pulvinar erat. Fusce tincidunt nisl eget ipsum.</p>
+								<h2 class="align-center">Inventory System (UE4 blueprints)</h2>
+								<p class="align-center">This is an Inventory System made entirely with Blueprints. Features include stacking items, transferring items between Inventories using a click or by dragging and dropping, and a quest system built in to NPC Inventories. </p>
+								<ul class="actions special">
+									<li>
+										<a href="#Functionality" class="button primary">Functionality</a>
+									</li>
+									<li>
+										<a href="#draganddrop" class="button primary">Drag and Drop</a>
+									</li>
+									<li>
+										<a href="#chests" class="button primary">NPCs and Chests</a>
+									</li>
+									<li>
+										<a href="#quests" class="button primary">Quest System</a>
+									</li>
+								</ul>
+
+								<ul class="actions special">
+								<li>
+								<a href="https://lewis-hill.itch.io/inventory-system-demo" target="_blank" class="button">Link to Itch.io</a>
+								</li>
+								</ul>
 							</div>
 						</header>
 
-						<!-- Content -->
-							<div class="wrapper">
+						<!-- Functionality -->
+						<div class="wrapper style3">
+							<header id="Functionality">
+								<br>
 								<div class="inner">
-
-									<h3 class="major">Lorem ipsum dolor</h3>
-									<p>Morbi mattis mi consectetur tortor elementum, varius pellentesque velit convallis. Aenean tincidunt lectus auctor mauris maximus, ac scelerisque ipsum tempor. Duis vulputate ex et ex tincidunt, quis lacinia velit aliquet. Duis non efficitur nisi, id malesuada justo. Maecenas sagittis felis ac sagittis semper. Curabitur purus leo donec vel dolor at arcu tincidunt bibendum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Fusce ut aliquet justo. Donec id neque ipsum. Integer eget ultricies odio. Nam vel ex a orci fringilla tincidunt. Aliquam eleifend ligula non velit accumsan cursus. Etiam ut gravida sapien.</p>
-
-									<p>Vestibulum ultrices risus velit, sit amet blandit massa auctor sit amet. Sed eu lectus sem. Phasellus in odio at ipsum porttitor mollis id vel diam. Praesent sit amet posuere risus, eu faucibus lectus. Vivamus ex ligula, tempus pulvinar ipsum in, auctor porta quam. Proin nec commodo, vel scelerisque nisi scelerisque. Suspendisse id quam vel tortor tincidunt suscipit. Nullam auctor orci eu dolor consectetur, interdum ullamcorper ante tincidunt. Mauris felis nec felis elementum varius.</p>
-
-									<h3 class="major">Vitae phasellus</h3>
-									<p>Cras mattis ante fermentum, malesuada neque vitae, eleifend erat. Phasellus non pulvinar erat. Fusce tincidunt, nisl eget mattis egestas, purus ipsum consequat orci, sit amet lobortis lorem lacus in tellus. Sed ac elementum arcu. Quisque placerat auctor laoreet.</p>
-
-									<section class="features">
-										<article>
-											<a href="#" class="image"><img src="images/pic04.jpg" alt="" /></a>
-											<h3 class="major">Sed feugiat lorem</h3>
-											<p>Lorem ipsum dolor sit amet, consectetur adipiscing vehicula id nulla dignissim dapibus ultrices.</p>
-											<a href="#" class="special">Learn more</a>
-										</article>
-										<article>
-											<a href="#" class="image"><img src="images/pic05.jpg" alt="" /></a>
-											<h3 class="major">Nisl placerat</h3>
-											<p>Lorem ipsum dolor sit amet, consectetur adipiscing vehicula id nulla dignissim dapibus ultrices.</p>
-											<a href="#" class="special">Learn more</a>
-										</article>
-									</section>
-
+									<h2><u>Functionality</u></h2>
 								</div>
-							</div>
+							</header>
+							<div class="inner">
+								<video class="image left" controls src="images/InventoryFunctionalityFinal.mp4"></video>			
+								<h3 class="major">Adding items to inventory</h3>
+								<p>After picking up an item using the Interact Interface, the function AddToInventory is called on the Player's Inventory Component. The Data Structure attached to the Item tells the function all the attributes the slot should have. If the Item already exists in the Player's Inventory, it checks to see if the picked up item can be added to an existing slot. If not, a new slot is created for that item.</p>
 
+								<h3 class="major">Toggling the Inventory</h3>
+								<p>The ToggleInventory function deals with any situation where the Inventory is opened or closed, and creates or removes the Inventory UI as appropriate. This covers situations where a chest is interacted with and both Player and Chest inventories are opened, pressing Tab to open the Player Inventory, or pressingthe "X" button to close any Inventory. There is a bool called "IsTransferInventory" to tell the function if there is another inventory to close other than the Player's.</p>
+
+								<ul class="actions">
+									<li>
+									<button class="button">See Code</button>
+									<div class="codecontent">
+										i = 0;
+		
+												while (!deck.isInOrder()) {
+												  print 'Iteration ' + i;
+												  deck.shuffle();
+												  i++;
+												}
+												
+												print 'It took ' + i + ' iterations to sort the deck.';
+									</div>
+									</li>
+									</ul>
+
+								<ul class="actions">
+									<li><a href="#Top" class="button primary">Jump to top</a></li>
+								</ul>
+								
+							</div>
+						</div>
+
+						<!-- Drag and Drop -->
+						<div class="wrapper alt style">
+							<header id="draganddrop">
+								<br>
+								<div class="inner">
+									<h2><u>Drag and Drop items</u></h2>
+								</div>
+							</header>
+							<div class="inner">
+								<video class="image left" controls src="images/InventoryDragAndDrop.mp4"></video>
+
+								<h3 class="major">Dragging an item using the Mouse</h3>
+								<p>When the mouse is held on a slot, that slot creates a DragDrop operation and the Drag UI icon which takes the attributes of the item. The original slot is wiped to make the dragging more convincing. The DragDrop operation also takes the Structure attributes from the specific slot as an Input variable, so that it knows how to transfer the item when it is dropped on</p>
+
+								<h3 class="major">Dropping an item</h3>
+								<p>The ToggleInventory function deals with any situation where the Inventory is opened or closed, and creates or removes the Inventory UI as appropriate. This covers situations where a chest is interacted with and both Player and Chest inventories are opened, pressing Tab to open the Player Inventory, or pressingthe "X" button to close any Inventory. There is a bool called "IsTransferInventory" to tell the function if there is another inventory to close other than the Player's.</p>
+
+								<a href="#Top" class="button primary">Jump to top</a>
+							</div>
+						</div>
+
+						<!-- NPC and Chests -->
+						<div class="wrapper style3">
+							<header id="chests">
+								<br>
+								<div class="inner">
+									<h2><u>NPCs and Chests</u></h2>
+								</div>
+							</header>
+							<div class="inner">
+
+								<h3 class="major">Easy to create
+								</h3>
+								<p>I made creating new objects such as Chests and NPCs, with their own Inventory, as simple as creating a child class of the "Container" Blueprint, which comes with its own Inventory Component. From there, you just give it a new static mesh, choose the name of the Container and decide how many slots the Inventory will have.</p>
+								<p>Once set in the level, you can easily add the items that will start off in the Containers. You can also choose whether it will have a Quest for the Player (For NPCs), and set the Item the Player will need to donate for the Quest, and how many.</p>
+
+								<ul class="actions">
+									<li>
+									<button class="button">See Code</button>
+									<div class="codecontent">
+										i = 0;
+		
+												while (!deck.isInOrder()) {
+												  print 'Iteration ' + i;
+												  deck.shuffle();
+												  i++;
+												}
+												
+												print 'It took ' + i + ' iterations to sort the deck.';
+									</div>
+									</li>
+									</ul>
+
+								<ul class="actions">
+									<li><a href="#Top" class="button primary">Jump to top</a></li>
+								</ul>
+							</div>
+						</div>
+
+						<!-- Quests -->
+						<div class="wrapper alt style">
+							<header id="quests">
+								<br>
+								<div class="inner">
+									<h2><u>Quest System</u></h2>
+								</div>
+							</header>
+							<div class="inner">
+								<video class="image left" controls src="images/InventoryQuest.mp4"></video>		
+								<h3 class="major">Accepting quests
+								</h3>
+								<p>Upon clicking the "Accept Quest" button on an NPC that has a Quest, all other Quests are put on hold and the Quest becomes active. The NPC asks the Player for an Item that can be placed in their Inventory. The Quest Item is a Structure variable that can be set in the Editor. </p>
+
+								<h3 class="major">Updating status and delivering rewards</h3>
+								<p>Depending on the item placed in the NPC's Inventory, the status of the Quest is updated in that NPC's Inventory and on the Player's HUD, and the Quest Status Text (How many of the items have been donated) will be updated appropriately for which Item was given. </p>
+								<p>When the Quest requirements have been met, the Player can click the "Hand In Quest" button to complete the Quest and receive a new Inventory Slot as a reward. The Quest Status Text is again updated and the NPC will no longer offer a Quest.</p>
+								
+								<ul class="actions">
+									<li>
+									<button class="button">See Code</button>
+									<div class="codecontent">
+										i = 0;
+		
+												while (!deck.isInOrder()) {
+												  print 'Iteration ' + i;
+												  deck.shuffle();
+												  i++;
+												}
+												
+												print 'It took ' + i + ' iterations to sort the deck.';
+									</div>
+									</li>
+									</ul>
+
+								<ul class="actions">
+									<li><a href="#Top" class="button primary">Jump to top</a></li>
+								</ul>
+							</div>
+						</div>
 					</section>
 
 				<!-- Footer -->
-					<section id="footer">
+					<section class="wrapper style3">
 						<div class="inner">
-							<h2 class="major">Get in touch</h2>
-							<p>Cras mattis ante fermentum, malesuada neque vitae, eleifend erat. Phasellus non pulvinar erat. Fusce tincidunt, nisl eget mattis egestas, purus ipsum consequat orci, sit amet lobortis lorem lacus in tellus. Sed ac elementum arcu. Quisque placerat auctor laoreet.</p>
-							<form method="post" action="#">
-								<div class="fields">
-									<div class="field">
-										<label for="name">Name</label>
-										<input type="text" name="name" id="name" />
-									</div>
-									<div class="field">
-										<label for="email">Email</label>
-										<input type="email" name="email" id="email" />
-									</div>
-									<div class="field">
-										<label for="message">Message</label>
-										<textarea name="message" id="message" rows="4"></textarea>
-									</div>
-								</div>
-								<ul class="actions">
-									<li><input type="submit" value="Send Message" /></li>
-								</ul>
-							</form>
-							<ul class="contact">
-								<li class="icon solid fa-home">
-									Untitled Inc<br />
-									1234 Somewhere Road Suite #2894<br />
-									Nashville, TN 00000-0000
-								</li>
-								<li class="icon solid fa-phone">(000) 000-0000</li>
-								<li class="icon solid fa-envelope"><a href="#">information@untitled.tld</a></li>
-								<li class="icon brands fa-twitter"><a href="#">twitter.com/untitled-tld</a></li>
-								<li class="icon brands fa-facebook-f"><a href="#">facebook.com/untitled-tld</a></li>
-								<li class="icon brands fa-instagram"><a href="#">instagram.com/untitled-tld</a></li>
-							</ul>
-							<ul class="copyright">
-								<li>&copy; Untitled Inc. All rights reserved.</li><li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
-							</ul>
+						<ul class="contact">
+							<li class="icon solid fa-envelope"><a href="mailto: lewishill81@gmail.com" target="_blank">lewishill81@gmail.com</a></li>
+							<li class="icon brands fa-linkedin"><a href="https://www.linkedin.com/in/lewis-hill-200425195/" target="_blank">Linkedin</a></li>
+						</ul>
 						</div>
 					</section>
 
