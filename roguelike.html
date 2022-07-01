@@ -86,17 +86,280 @@
 
 								<ul class="actions">
 									<li>
-									<button class="button">See Code</button>
+									<button class="button">See Player Controller Code</button>
 									<div class="codecontent">
-										i = 0;
-		
-												while (!deck.isInOrder()) {
-												  print 'Iteration ' + i;
-												  deck.shuffle();
-												  i++;
+										public class PlayerController : MonoBehaviour
+										{
+											public static PlayerController instance;
+										
+											public Rigidbody2D theRb;
+										
+											public SpriteRenderer playerSR, bodySR, body2SR;
+										
+											public Sprite player, playerHealed, body, bodyHealed, playerDamaged, bodyDamaged;
+										
+											public float moveSpeed, activeMoveSpeed;
+										
+											public Transform gunHand;
+										
+											private Vector2 moveInput;
+										
+											public Animator anim;
+										
+											public float maxHealth, currentHealth, onReincarnateHealth;
+											private float reincarnateHealthToTakeAway = 30f;
+										
+											public GameObject rock, firePoint, zEffect;
+										
+											public bool isDeincarnated = false;
+										
+											public bool canMove = true;
+										
+											public float InvincibilityTimer, timeOfInvincibility;
+										
+											public bool isInvincible = false;
+										
+											public float dashSpeed, dashCooldown, dashInvincibilityTime, dashLength;
+										
+											private float damageLength = 0.1f;
+											public int extraHealToTake = 0;
+										
+											[Header("Card Effects")]
+											public bool isDoubleHeal;
+										
+											[HideInInspector]
+											public int damageTakenIncrease = 0;
+										
+											private float dashTimer, dashCooldownTimer, damageTimer;
+										
+											public GameObject audioManager;
+										
+											private void Awake()
+											{
+												instance = this;
+											}
+											// Start is called before the first frame update
+											void Start()
+											{
+												audioManager = GameObject.Find("Audio Manager");
+												activeMoveSpeed = moveSpeed;
+										
+												//Start the game with the health given after reincarnating
+												onReincarnateHealth = maxHealth - reincarnateHealthToTakeAway;
+												currentHealth = onReincarnateHealth;
+											}
+										
+											// Update is called once per frame
+											void Update()
+											{
+												//Handle movement
+												if (!GameManager.instance.isPausedReincarnate && !GameManager.instance.isPausedMenu)
+												{
+													if (damageTimer > 0)
+													{
+														damageTimer -= Time.deltaTime;
+													}
+													else
+													{
+														playerSR.sprite = player;
+														bodySR.sprite = body;
+														body2SR.sprite = body;
+													}
+										
+													if (canMove)
+													{
+														{
+															if (isInvincible)
+															{
+																playerSR.color = new Color(1.0f, 1.0f, 1.0f, 0.5f);
+																if (InvincibilityTimer > 0)
+																{
+																	InvincibilityTimer -= Time.deltaTime;
+																}
+																else
+																{
+																	isInvincible = false;
+																	playerSR.color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
+																}
+															}
+										
+															moveInput.x = Input.GetAxisRaw("Horizontal");
+															moveInput.y = Input.GetAxisRaw("Vertical");
+										
+															moveInput.Normalize();
+										
+															theRb.velocity = moveInput * activeMoveSpeed;
+										
+															Vector3 mousePos = Input.mousePosition;
+															Vector3 screenPoint = CameraController.instance.mainCamera.WorldToScreenPoint(transform.localPosition);
+										
+															if (mousePos.x < screenPoint.x)
+															{
+																transform.localScale = new Vector3(-1f, 1f, 1f);
+																gunHand.localScale = new Vector3(-1.5f, -1.5f, 1f);
+															}
+															else
+															{
+																transform.localScale = new Vector3(1f, 1f, 1f);
+																gunHand.localScale = new Vector3(1.5f, 1.5f, 1f);
+															}
+										
+															Vector2 offset = new Vector2(mousePos.x - screenPoint.x, mousePos.y - screenPoint.y);
+															float angle = Mathf.Atan2(offset.y, offset.x) * Mathf.Rad2Deg;
+										
+															gunHand.rotation = Quaternion.Euler(0, 0, angle);
+										
+															if (moveInput != Vector2.zero)
+															{
+																anim.SetBool("isMoving", true);
+															}
+															else
+															{
+																anim.SetBool("isMoving", false);
+															}
+										
+															if (Input.GetKeyDown(KeyCode.Space) && dashTimer <= 0 && dashCooldownTimer <= 0)
+															{
+																audioManager.GetComponent<AudioManager>().PlaySFX(6);
+																activeMoveSpeed = dashSpeed;
+																ActivateInvincibility(dashInvincibilityTime);
+																dashTimer = dashLength;
+																anim.SetTrigger("Dash");
+															}
+										
+															if (dashTimer > 0)
+															{
+																dashTimer -= Time.deltaTime;
+																if (dashTimer <= 0)
+																{
+																	activeMoveSpeed = moveSpeed;
+																	dashCooldownTimer = dashCooldown;
+																}
+															}
+										
+															if (dashCooldownTimer > 0)
+															{
+																dashCooldownTimer -= Time.deltaTime;
+															}
+														}
+													}
+										
+													else
+													{
+														theRb.velocity = Vector3.zero;
+														anim.SetBool("isMoving", false);
+														activeMoveSpeed = moveSpeed;
+														dashCooldownTimer = 0;
+														dashTimer = 0;
+										
+														if (isInvincible)
+														{
+															isInvincible = false;
+															playerSR.color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
+															InvincibilityTimer = 0;
+														}
+													}
 												}
-												
-												print 'It took ' + i + ' iterations to sort the deck.';
+										
+												//If player is healed, Deincarnate 
+												if (currentHealth >= maxHealth && !isDeincarnated)
+												{
+													currentHealth = maxHealth;
+													isDeincarnated = true;
+										
+													GameManager.instance.PauseGame();
+													CardManager.instance.Unequip();
+													//GameManager.instance.UnpauseGame();
+													//ActivateInvincibility(2f);
+												}
+											}
+										
+											//This function covers being damaged by items and healed by enemies
+											public void TakeDamage(int damageToTake)
+											{
+												if (!isInvincible || damageToTake > 0)
+												{
+													if (damageToTake > currentHealth)
+													{
+														currentHealth = 0;
+													}
+													else
+													{
+														if (isDoubleHeal && damageToTake < 0)
+														{
+															currentHealth -= damageToTake * 2;
+														}
+														else
+														{
+															currentHealth -= damageToTake;
+														}
+													}
+												}
+											}
+										
+											//One of the card abilities
+											public void IncreaseMaxHealth(int healthToIncrease)
+											{
+												maxHealth += healthToIncrease;
+												onReincarnateHealth = maxHealth - reincarnateHealthToTakeAway;
+												currentHealth = onReincarnateHealth;
+											}
+										
+											//This is called when the Player rolls
+											public void ActivateInvincibility(float timeOfInvincibility)
+											{
+												isInvincible = true;
+												InvincibilityTimer = timeOfInvincibility;
+											}
+										
+											//Trigger the visual effect for when the Player is damaged or healed
+											public void DamagedByEnemy(bool isEnemy)
+											{
+												if (isEnemy)
+												{
+													if (!isInvincible)
+													{
+														damageTimer = damageLength;
+														damageTimer = damageLength;
+														playerSR.sprite = playerHealed;
+														bodySR.sprite = bodyHealed;
+														body2SR.sprite = bodyHealed;
+													}
+												}
+										
+												if (!isEnemy)
+												{
+													damageTimer = damageLength;
+													playerSR.sprite = playerDamaged;
+													bodySR.sprite = bodyDamaged;
+													body2SR.sprite = bodyDamaged;
+												}
+											}
+										
+											//One of the card abilities
+											public void IncreaseDamageTaken(int damageIncrease)
+											{
+												damageTakenIncrease += damageIncrease;
+											}
+										
+											//This occurs when a Hammer enemy knocks the Player out
+											public void KnockOut()
+											{
+												Instantiate(zEffect, new Vector3(transform.position.x, transform.position.y + 0.5f), transform.rotation, gameObject.transform);
+											}
+										
+											//One of the card abilities
+											public void DecreaseHealthOnReincarnation(int healthAmount)
+											{
+												reincarnateHealthToTakeAway += healthAmount;
+											}
+										
+											//One of the card abilities
+											public void IncreaseHealToTake(int heal)
+											{
+												extraHealToTake += heal;
+											}
+										}
 									</div>
 									</li>
 									</ul>
