@@ -179,21 +179,9 @@ input::-moz-focus-inner {
   
   /* Style the collapsible content. Note: hidden by default */
   .codecontent {
-	padding: 0 18px;
-	display: none;
-	overflow: hidden;
-	background-color: rgba(255, 255, 255, 0.025);
+
 	background: rgba(255, 255, 255, 0.025);
-	border-radius: 5px;
-	border: solid 2px rgba(255, 255, 255, 0.125);
-	font-family: "Courier New", monospace;
-	font-size: 0.9em;
-	margin: 0 0.25em;
-	padding: 0.25em 0.65em;
-	-webkit-overflow-scrolling: touch;
-	font-family: "Courier New", monospace;
-	font-size: 0.9em;
-	margin: 0 0 2em 0;
+
   }
 
   .centerbutton {
