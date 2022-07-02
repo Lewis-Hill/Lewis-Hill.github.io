@@ -1077,259 +1077,201 @@ public class RoomPrefab
 									<button class="button">See Enemy Controller Code</button>
 									<div class="codecontent">
 <pre>public class EnemyController : MonoBehaviour
-{
-	[Header("Chase Player")]
-	public bool shouldChase;
-	public float chasePlayerRange;
-
-	[Header("Sacrifice")]
-	public bool shouldSacrifice;
-	public float chaseProjectileRange, diveRange, diveSpeed;
-
-	[Header("Shoot Projectiles")]
-	public bool shouldShoot;
-	private bool shootBreak = false;
-	public float shootSpeed, shootRange,  timeBetweenShots, shootLength, shootBreakLength;
-	private float shootTimer, shootBreakTimer, shootLengthTimer;
-
-	public float moveSpeed, normalSpeed;
-
-	[Header("Dismantle traps")]
-	public bool shouldDismantle;
-	public bool isMovingToDismantle, isDismantling, isSteppingBack;
-	public float dismantleLength, dismantleTimer;
-	public Animator hammerAnim;
-
-	public Rigidbody2D theRB;
-
-	private Vector3 moveDirection;
-
-	public Animator anim;
-
-	private bool isLookingRight;
-
-	public bool isDead = false;
-
-	public bool isSacrificing = false;
-
-	public bool failedDive = false;
-
-	public int health, maxHealth;
-
-	public SpriteRenderer theSR;
-
-	public Sprite arrowKill;
-
-	public GameObject bullet, heartWarningEffect;
-
-	public RoomCenter room;
-
-	public DamageItems target;
-
-	public Coroutine dismantleCoroutine, holdPlayerCoroutine;
-
-	public int damageToPlayer = -10;
-
-	public GameObject audioManager;
-
-
-	// Start is called before the first frame update
-	void Start()
 	{
-		audioManager = GameObject.Find("Audio Manager");
-		health = maxHealth;
-		shootBreakTimer = shootBreakLength;
-	}
-
-	// Update is called once per frame
-	void Update()
-	{
-		if (!isDead)
+		[Header("Chase Player")]
+		public bool shouldChase;
+		public float chasePlayerRange;
+	
+		[Header("Sacrifice")]
+		public bool shouldSacrifice;
+		public float chaseProjectileRange, diveRange, diveSpeed;
+	
+		[Header("Shoot Projectiles")]
+		public bool shouldShoot;
+		private bool shootBreak = false;
+		public float shootSpeed, shootRange,  timeBetweenShots, shootLength, shootBreakLength;
+		private float shootTimer, shootBreakTimer, shootLengthTimer;
+	
+		public float moveSpeed, normalSpeed;
+	
+		[Header("Dismantle traps")]
+		public bool shouldDismantle;
+		public bool isMovingToDismantle, isDismantling, isSteppingBack;
+		public float dismantleLength, dismantleTimer;
+		public Animator hammerAnim;
+	
+		public Rigidbody2D theRB;
+	
+		private Vector3 moveDirection;
+	
+		public Animator anim;
+	
+		private bool isLookingRight;
+	
+		public bool isDead = false;
+	
+		public bool isSacrificing = false;
+	
+		public bool failedDive = false;
+	
+		public int health, maxHealth;
+	
+		public SpriteRenderer theSR;
+	
+		public Sprite arrowKill;
+	
+		public GameObject bullet, heartWarningEffect;
+	
+		public RoomCenter room;
+	
+		public DamageItems target;
+	
+		public Coroutine dismantleCoroutine, holdPlayerCoroutine;
+	
+		public int damageToPlayer = -10;
+	
+		public GameObject audioManager;
+	
+		public float cameraXPos, cameraTargetXPos, cameraYPos, cameraTargetYPos;
+	
+	
+		// Start is called before the first frame update
+		void Start()
 		{
-			if (theSR.isVisible)
+			audioManager = GameObject.Find("Audio Manager");
+			health = maxHealth;
+			shootBreakTimer = shootBreakLength;
+	
+			cameraXPos = CameraController.instance.transform.position.x;
+			cameraTargetXPos = CameraController.instance.target.transform.position.x;
+			cameraYPos = CameraController.instance.transform.position.y;
+			cameraTargetYPos = CameraController.instance.target.transform.position.y;
+		}
+	
+		// Update is called once per frame
+		void Update()
+		{
+			if (!isDead)
 			{
-				if (GameObject.FindObjectOfType<BossController>() != null || CameraController.instance.transform.position.x == CameraController.instance.target.transform.position.x && CameraController.instance.transform.position.y == CameraController.instance.target.transform.position.y)
+				if (theSR.isVisible)
 				{
-					if (PlayerController.instance.canMove && !isDismantling)
+					if (GameObject.FindObjectOfType<BossController>() != null || cameraXPos == cameraTargetXPos && cameraYPos == cameraTargetYPos)
 					{
-						moveDirection = Vector3.zero;
-					}
-
-					//Do something based on distance from another object
-					if (shouldChase && !isSacrificing && !failedDive)
-					{
-						if (Vector3.Distance(PlayerController.instance.transform.position, transform.position) < chasePlayerRange)
+						if (PlayerController.instance.canMove && !isDismantling)
 						{
-							if (shouldDismantle)
-							{
-								hammerAnim.SetBool("isChasing", true);
-							}
-
-							moveDirection = PlayerController.instance.transform.position - transform.position;
-							moveSpeed = normalSpeed;
+							moveDirection = Vector3.zero;
 						}
-						else if (shouldDismantle)
+	
+						//Do something based on distance from another object
+						if (shouldChase && !isSacrificing && !failedDive)
 						{
-							hammerAnim.SetBool("isChasing", false);
-						}
-					}
-
-					if (shouldSacrifice)
-					{
-						if (GameObject.FindGameObjectWithTag("DamageProjectile") != null)
-						{
-							Projectiles arrow = GameObject.FindGameObjectWithTag("DamageProjectile").GetComponent<Projectiles>();
-
-							if (Vector3.Distance(arrow.sacrificeTarget.transform.position, transform.position) < chaseProjectileRange)
+							if (Vector3.Distance(PlayerController.instance.transform.position, transform.position) < chasePlayerRange)
 							{
-								isSacrificing = true;
-
-								if (Vector3.Distance(arrow.sacrificeTarget.transform.position, transform.position) <= diveRange)
+								if (shouldDismantle)
 								{
-									anim.SetBool("isDiving", true);
-									moveSpeed = diveSpeed;
-									moveDirection = arrow.sacrificeTarget.transform.position - transform.position;
+									hammerAnim.SetBool("isChasing", true);
+								}
+	
+								moveDirection = PlayerController.instance.transform.position - transform.position;
+								moveSpeed = normalSpeed;
+							}
+							else if (shouldDismantle)
+							{
+								hammerAnim.SetBool("isChasing", false);
+							}
+						}
+	
+						if (shouldSacrifice)
+						{
+							if (GameObject.FindGameObjectWithTag("DamageProjectile") != null)
+							{
+								Projectiles arrow = GameObject.FindGameObjectWithTag("DamageProjectile").GetComponent<Projectiles>();
+	
+								if (Vector3.Distance(arrow.sacrificeTarget.transform.position, transform.position) < chaseProjectileRange)
+								{
+									isSacrificing = true;
+	
+									if (Vector3.Distance(arrow.sacrificeTarget.transform.position, transform.position) <= diveRange)
+									{
+										anim.SetBool("isDiving", true);
+										moveSpeed = diveSpeed;
+										moveDirection = arrow.sacrificeTarget.transform.position - transform.position;
+									}
+									else
+									{
+										moveDirection = arrow.sacrificeTarget.transform.position - transform.position;
+										anim.SetBool("isDiving", false);
+										moveSpeed = normalSpeed;
+									}
+								}
+							}
+							else
+							{
+								isSacrificing = false;
+								anim.SetBool("isDiving", false);
+	
+								if (anim.GetCurrentAnimatorStateInfo(0).IsName("Enemy_Dive"))
+								{
+									failedDive = true;
 								}
 								else
 								{
-									moveDirection = arrow.sacrificeTarget.transform.position - transform.position;
-									anim.SetBool("isDiving", false);
-									moveSpeed = normalSpeed;
+									failedDive = false;
 								}
 							}
 						}
 						else
 						{
-							isSacrificing = false;
+							theRB.velocity = Vector3.zero;
 							anim.SetBool("isDiving", false);
-
-							if (anim.GetCurrentAnimatorStateInfo(0).IsName("Enemy_Dive"))
-							{
-								failedDive = true;
-							}
-							else
-							{
-								failedDive = false;
-							}
+							moveSpeed = normalSpeed;
 						}
-					}
-					else
-					{
-						theRB.velocity = Vector3.zero;
-						anim.SetBool("isDiving", false);
-						moveSpeed = normalSpeed;
-					}
-
-					if (shouldShoot)
-					{
-						if (Vector3.Distance(PlayerController.instance.transform.position, transform.position) <= shootRange)
+	
+						if (shouldShoot)
 						{
-							if (!shootBreak)
+							if (Vector3.Distance(PlayerController.instance.transform.position, transform.position) <= shootRange)
 							{
-								shootLengthTimer -= Time.deltaTime;
-
-								if (shootLengthTimer <= 0)
+								if (!shootBreak)
 								{
-									shootBreak = true;
-									shootBreakTimer = shootBreakLength;
-									Instantiate(heartWarningEffect, transform.position, transform.rotation, gameObject.transform);
-									audioManager.GetComponent<AudioManager>().PlaySFX(19);
-								}
-
-								if (shootTimer > 0)
-								{
-									shootTimer -= Time.deltaTime;
-								}
-								else if (!shootBreak)
-								{
-									Instantiate(bullet, transform.position, transform.rotation);
-									audioManager.GetComponent<AudioManager>().PlaySFX(17);
-
-
-									shootTimer = timeBetweenShots;
-								}
-							}
-							else
-							{
-								shootBreakTimer -= Time.deltaTime;
-
-								if (shootBreakTimer <= 0)
-								{
-									shootBreak = false;
-									shootLengthTimer = shootLength;
-								}
-							}
-						}
-					}
-
-					if (shouldDismantle)
-					{
-						if (room == null)
-						{
-							if (PlayerController.instance.canMove)
-							{
-								shouldChase = true;
-							}
-							else
-							{
-								shouldChase = false;
-								hammerAnim.SetBool("isHitting", false);
-							}
-						}
-
-						if (target != null)
-						{
-							if (target.GetComponent<DamageItems>().isDead)
-							{
-								int position = room.damageItems.IndexOf(target);
-								room.damageItems.RemoveAt(position);
-								Destroy(target.gameObject);
-								isMovingToDismantle = false;
-								isDismantling = false;
-
-								if (dismantleCoroutine != null)
-								{
-									StopCoroutine(dismantleCoroutine);
-									hammerAnim.SetBool("isHitting", false);
-								}
-							}
-						}
-
-						if (!isMovingToDismantle && !isDismantling && room != null)
-						{
-							if (room.damageItems.Count > 0)
-							{
-								foreach (DamageItems damageItem in room.damageItems)
-								{
-									if (!damageItem.isTargeted)
+									shootLengthTimer -= Time.deltaTime;
+	
+									if (shootLengthTimer <= 0)
 									{
-										target = damageItem;
-										target.isTargeted = true;
-										isMovingToDismantle = true;
-
-										break;
+										shootBreak = true;
+										shootBreakTimer = shootBreakLength;
+										Instantiate(heartWarningEffect, transform.position, transform.rotation, gameObject.transform);
+										audioManager.GetComponent<AudioManager>().PlaySFX(19);
+									}
+	
+									if (shootTimer > 0)
+									{
+										shootTimer -= Time.deltaTime;
+									}
+									else if (!shootBreak)
+									{
+										Instantiate(bullet, transform.position, transform.rotation);
+										audioManager.GetComponent<AudioManager>().PlaySFX(17);
+	
+	
+										shootTimer = timeBetweenShots;
 									}
 								}
-
-								if (!shouldChase && !isSteppingBack)
+								else
 								{
-									moveDirection = Vector3.zero;
-								}
-
-								if (!isMovingToDismantle)
-								{
-									if (PlayerController.instance.canMove)
+									shootBreakTimer -= Time.deltaTime;
+	
+									if (shootBreakTimer <= 0)
 									{
-										shouldChase = true;
-									}
-									else
-									{
-										shouldChase = false;
-										hammerAnim.SetBool("isHitting", false);
+										shootBreak = false;
+										shootLengthTimer = shootLength;
 									}
 								}
 							}
-							else
+						}
+	
+						if (shouldDismantle)
+						{
+							if (room == null)
 							{
 								if (PlayerController.instance.canMove)
 								{
@@ -1339,210 +1281,275 @@ public class RoomPrefab
 								{
 									shouldChase = false;
 									hammerAnim.SetBool("isHitting", false);
-
+								}
+							}
+	
+							if (target != null)
+							{
+								if (target.GetComponent<DamageItems>().isDead)
+								{
+									int position = room.damageItems.IndexOf(target);
+									room.damageItems.RemoveAt(position);
+									Destroy(target.gameObject);
+									isMovingToDismantle = false;
+									isDismantling = false;
+	
+									if (dismantleCoroutine != null)
+									{
+										StopCoroutine(dismantleCoroutine);
+										hammerAnim.SetBool("isHitting", false);
+									}
+								}
+							}
+	
+							if (!isMovingToDismantle && !isDismantling && room != null)
+							{
+								if (room.damageItems.Count > 0)
+								{
+									foreach (DamageItems damageItem in room.damageItems)
+									{
+										if (!damageItem.isTargeted)
+										{
+											target = damageItem;
+											target.isTargeted = true;
+											isMovingToDismantle = true;
+	
+											break;
+										}
+									}
+	
+									if (!shouldChase && !isSteppingBack)
+									{
+										moveDirection = Vector3.zero;
+									}
+	
+									if (!isMovingToDismantle)
+									{
+										if (PlayerController.instance.canMove)
+										{
+											shouldChase = true;
+										}
+										else
+										{
+											shouldChase = false;
+											hammerAnim.SetBool("isHitting", false);
+										}
+									}
+								}
+								else
+								{
+									if (PlayerController.instance.canMove)
+									{
+										shouldChase = true;
+									}
+									else
+									{
+										shouldChase = false;
+										hammerAnim.SetBool("isHitting", false);
+	
+										if (!isSteppingBack)
+										{
+											moveDirection = Vector3.zero;
+										}
+									}
+								}
+							}
+							else
+							{
+								if (target != null && !isDismantling)
+								{
+									moveDirection = target.GetComponent<DamageItems>().target.transform.position - transform.position;
+								}
+	
+								if (!isMovingToDismantle && !isDismantling && !PlayerController.instance.canMove)
+								{
+									shouldChase = false;
+									hammerAnim.SetBool("isHitting", false);
+	
 									if (!isSteppingBack)
 									{
 										moveDirection = Vector3.zero;
 									}
 								}
 							}
-						}
-						else
-						{
-							if (target != null && !isDismantling)
+	
+							if (target != null && target.GetComponent<ReactedObjects>() != null)
 							{
-								moveDirection = target.GetComponent<DamageItems>().target.transform.position - transform.position;
-							}
-
-							if (!isMovingToDismantle && !isDismantling && !PlayerController.instance.canMove)
-							{
-								shouldChase = false;
-								hammerAnim.SetBool("isHitting", false);
-
-								if (!isSteppingBack)
+								if (target.GetComponent<ReactedObjects>().hasShot == true)
 								{
-									moveDirection = Vector3.zero;
-								}
-							}
-						}
-
-						if (target != null && target.GetComponent<ReactedObjects>() != null)
-						{
-							if (target.GetComponent<ReactedObjects>().hasShot == true)
-							{
-								target.GetComponent<DamageItems>().isTargeted = false;
-								int position = room.damageItems.IndexOf(target);
-								room.damageItems.RemoveAt(position);
-								target = null;
-								isMovingToDismantle = false;
-								isDismantling = false;
-
-								Debug.Log("Removed");
-
-								if (dismantleCoroutine != null)
-								{
-									StopCoroutine(dismantleCoroutine);
-									hammerAnim.SetBool("isHitting", false);
+									target.GetComponent<DamageItems>().isTargeted = false;
+									int position = room.damageItems.IndexOf(target);
+									room.damageItems.RemoveAt(position);
+									target = null;
+									isMovingToDismantle = false;
+									isDismantling = false;
+	
+									Debug.Log("Removed");
+	
+									if (dismantleCoroutine != null)
+									{
+										StopCoroutine(dismantleCoroutine);
+										hammerAnim.SetBool("isHitting", false);
+									}
 								}
 							}
 						}
 					}
 				}
-			}
-
-			moveDirection.Normalize();
-
-			theRB.velocity = moveDirection * moveSpeed;
-
-			if (moveDirection != Vector3.zero)
-			{
-				anim.SetBool("isMoving", true);
+	
+				moveDirection.Normalize();
+	
+				theRB.velocity = moveDirection * moveSpeed;
+	
+				if (moveDirection != Vector3.zero)
+				{
+					anim.SetBool("isMoving", true);
+				}
+				else
+				{
+					anim.SetBool("isMoving", false);
+				}
+	
+				if (moveDirection.x > 0)
+				{
+					transform.localScale = new Vector3(-1f, 1f, 1f);
+					isLookingRight = true;
+				}
+				else if (moveDirection.x == 0 && isLookingRight == true)
+				{
+					transform.localScale = new Vector3(-1f, 1f, 1f);
+				}
+				else
+				{
+					transform.localScale = Vector3.one;
+					isLookingRight = false;
+				}
 			}
 			else
 			{
-				anim.SetBool("isMoving", false);
-			}
-
-			if (moveDirection.x > 0)
-			{
-				transform.localScale = new Vector3(-1f, 1f, 1f);
-				isLookingRight = true;
-			}
-			else if (moveDirection.x == 0 && isLookingRight == true)
-			{
-				transform.localScale = new Vector3(-1f, 1f, 1f);
-			}
-			else
-			{
-				transform.localScale = Vector3.one;
-				isLookingRight = false;
-			}
-		}
-		else
-		{
-			theRB.velocity = Vector3.zero;
-
-			if (dismantleCoroutine != null)
-			{
-				StopCoroutine(dismantleCoroutine);
-				hammerAnim.SetBool("isHitting", false);
-			}
-
-			if (holdPlayerCoroutine != null)
-			{
-				StopCoroutine(holdPlayerCoroutine);
-
-				if (!PlayerController.instance.canMove)
+				theRB.velocity = Vector3.zero;
+	
+				if (dismantleCoroutine != null)
 				{
-					PlayerController.instance.canMove = true;
+					StopCoroutine(dismantleCoroutine);
+					hammerAnim.SetBool("isHitting", false);
+				}
+	
+				if (holdPlayerCoroutine != null)
+				{
+					StopCoroutine(holdPlayerCoroutine);
+	
+					if (!PlayerController.instance.canMove)
+					{
+						PlayerController.instance.canMove = true;
+					}
 				}
 			}
 		}
-	}
-
-	public IEnumerator Dismantle(float dismantleLength)
-	{
-		hammerAnim.SetBool("isHitting", true);
-		shouldChase = false;
-		moveDirection = Vector3.zero;
-		yield return new WaitForSeconds(dismantleLength);
-		hammerAnim.SetBool("isHitting", false);
-		int position = room.damageItems.IndexOf(target);
-		room.damageItems.RemoveAt(position);
-
-		if (target.gameObject.GetComponent<Spike>() != null)
+	
+		public IEnumerator Dismantle(float dismantleLength)
 		{
-			audioManager.GetComponent<AudioManager>().PlaySFX(21);
-		}
-
-		if (target.gameObject.GetComponent<ReactedObjects>() != null)
-		{
-			audioManager.GetComponent<AudioManager>().PlaySFX(22);
-		}
-
-		Destroy(target.gameObject);
-		isMovingToDismantle = false;
-		isDismantling = false;
-	}
-	public IEnumerator HoldPlayer()
-	{
-		audioManager.GetComponent<AudioManager>().PlaySFX(24);
-		shouldChase = false;
-		hammerAnim.SetBool("isHitting", false);
-		isSteppingBack = true;
-		PlayerController.instance.canMove = false;
-		moveDirection = transform.position - PlayerController.instance.transform.position;
-		PlayerController.instance.KnockOut();
-		yield return new WaitForSeconds(1);
-		moveDirection = Vector3.zero;
-		yield return new WaitForSeconds(1);
-		PlayerController.instance.canMove = true;
-		isSteppingBack = false;
-		moveDirection = PlayerController.instance.transform.position - transform.position;
-
-	}
-
-	private void OnCollisionEnter2D(Collision2D other)
-	{
-		if (other.gameObject.CompareTag("Player") && !isDead)
-		{
-			if (shouldDismantle && shouldChase && !isMovingToDismantle && !other.gameObject.GetComponent<PlayerController>().isInvincible)
+			hammerAnim.SetBool("isHitting", true);
+			shouldChase = false;
+			moveDirection = Vector3.zero;
+			yield return new WaitForSeconds(dismantleLength);
+			hammerAnim.SetBool("isHitting", false);
+			int position = room.damageItems.IndexOf(target);
+			room.damageItems.RemoveAt(position);
+	
+			if (target.gameObject.GetComponent<Spike>() != null)
 			{
-				//moveDirection = transform.position - PlayerController.instance.transform.position;
-				holdPlayerCoroutine = StartCoroutine(HoldPlayer());
+				audioManager.GetComponent<AudioManager>().PlaySFX(21);
 			}
-			else if (!shouldDismantle)
+	
+			if (target.gameObject.GetComponent<ReactedObjects>() != null)
 			{
-				PlayerController.instance.TakeDamage(damageToPlayer - PlayerController.instance.extraHealToTake);
-				other.gameObject.GetComponent<PlayerController>().DamagedByEnemy(true);
+				audioManager.GetComponent<AudioManager>().PlaySFX(22);
 			}
-		}     
-	}
-
-	private void OnTriggerEnter2D(Collider2D other)
-	{
-		if (other.gameObject.CompareTag("DamageItem") && shouldDismantle)
+	
+			Destroy(target.gameObject);
+			isMovingToDismantle = false;
+			isDismantling = false;
+		}
+		public IEnumerator HoldPlayer()
 		{
-			if (target != null)
+			audioManager.GetComponent<AudioManager>().PlaySFX(24);
+			shouldChase = false;
+			hammerAnim.SetBool("isHitting", false);
+			isSteppingBack = true;
+			PlayerController.instance.canMove = false;
+			moveDirection = transform.position - PlayerController.instance.transform.position;
+			PlayerController.instance.KnockOut();
+			yield return new WaitForSeconds(1);
+			moveDirection = Vector3.zero;
+			yield return new WaitForSeconds(1);
+			PlayerController.instance.canMove = true;
+			isSteppingBack = false;
+			moveDirection = PlayerController.instance.transform.position - transform.position;
+	
+		}
+	
+		private void OnCollisionEnter2D(Collision2D other)
+		{
+			if (other.gameObject.CompareTag("Player") && !isDead)
 			{
-				if (Vector3.Distance(target.transform.position, transform.position) <= 2f)
+				if (shouldDismantle && shouldChase && !isMovingToDismantle && !other.gameObject.GetComponent<PlayerController>().isInvincible)
 				{
-					isDismantling = true;
-					dismantleCoroutine = StartCoroutine(Dismantle(target.dismantleTime));
+					//moveDirection = transform.position - PlayerController.instance.transform.position;
+					holdPlayerCoroutine = StartCoroutine(HoldPlayer());
+				}
+				else if (!shouldDismantle)
+				{
+					PlayerController.instance.TakeDamage(damageToPlayer - PlayerController.instance.extraHealToTake);
+					other.gameObject.GetComponent<PlayerController>().DamagedByEnemy(true);
+				}
+			}     
+		}
+	
+		private void OnTriggerEnter2D(Collider2D other)
+		{
+			if (other.gameObject.CompareTag("DamageItem") && shouldDismantle)
+			{
+				if (target != null)
+				{
+					if (Vector3.Distance(target.transform.position, transform.position) <= 2f)
+					{
+						isDismantling = true;
+						dismantleCoroutine = StartCoroutine(Dismantle(target.dismantleTime));
+					}
 				}
 			}
 		}
-	}
-
-	public void DamageEnemy(int damage)
-	{
-		health -= damage;
-
-		if (health <= 0)
+	
+		public void DamageEnemy(int damage)
 		{
-			if (target != null)
+			health -= damage;
+	
+			if (health <= 0)
 			{
-				target.GetComponent<DamageItems>().isTargeted = false;
+				if (target != null)
+				{
+					target.GetComponent<DamageItems>().isTargeted = false;
+				}
+				anim.SetBool("isDead", true);
+				isDead = true;
+	
+				if (shouldDismantle)
+				{
+					hammerAnim.SetBool("isHitting", false);
+					hammerAnim.SetBool("isChasing", false);
+				}
+	
+				StartCoroutine(DestroyEnemy());
 			}
-			anim.SetBool("isDead", true);
-			isDead = true;
-
-			if (shouldDismantle)
-			{
-				hammerAnim.SetBool("isHitting", false);
-				hammerAnim.SetBool("isChasing", false);
-			}
-
-			StartCoroutine(DestroyEnemy());
 		}
-	}
-
-	IEnumerator DestroyEnemy()
-	{
-		yield return new WaitForSeconds(1);
-		Destroy(gameObject);
-	}
-}</pre>
+	
+		IEnumerator DestroyEnemy()
+		{
+			yield return new WaitForSeconds(1);
+			Destroy(gameObject);
+		}
+	}</pre>
 									</div>
 									</li>
 									</ul>
