@@ -68,21 +68,18 @@
 							</div>
 						</header>
 
-						<!-- Functionality -->
+						<!-- Movement -->
 						<div class="wrapper style3">
 							<header id="Movement">
 								<br>
 								<div class="inner">
-									<h2><u>Movement and Camera</u></h2>
+									<h2><u>Movement</u></h2>
 								</div>
 							</header>
 							<div class="inner">
 								<video class="image left" controls src="images/Roguelike/Videos/Movement and camera.mp4"></video>			
 								<h3 class="major">Movement</h3>
 								<p>After picking up an item using the Interact Interface, the function AddToInventory is called on the Player's Inventory Component. The Data Structure attached to the Item tells the function all the attributes the slot should have. If the Item already exists in the Player's Inventory, it checks to see if the picked up item can be added to an existing slot. If not, a new slot is created for that item.</p>
-
-								<h3 class="major">Camera</h3>
-								<p>The ToggleInventory function deals with any situation where the Inventory is opened or closed, and creates or removes the Inventory UI as appropriate. This covers situations where a chest is interacted with and both Player and Chest inventories are opened, pressing Tab to open the Player Inventory, or pressingthe "X" button to close any Inventory. There is a bool called "IsTransferInventory" to tell the function if there is another inventory to close other than the Player's.</p>
 
 								<ul class="actions">
 									<li>
@@ -372,7 +369,7 @@
 							</div>
 						</div>
 
-						<!-- Drag and Drop -->
+						<!-- Procedural generation -->
 						<div class="wrapper alt style">
 							<header id="Procedural">
 								<br>
@@ -383,25 +380,195 @@
 							<div class="inner">
 								<video class="image left" controls src="images/Roguelike/Videos/Level generation.mp4"></video>
 
-								<h3 class="major">Dragging an item using the Mouse</h3>
+								<h3 class="major">Different rooms every time</h3>
 								<p>When the mouse is held on a slot, that slot creates a DragDrop operation and the Drag UI icon which takes the attributes of the item. The original slot is wiped to make the dragging more convincing. The DragDrop operation also takes the Structure attributes from the specific slot as an Input variable, so that it knows how to transfer the item when it is dropped on</p>
 
-								<h3 class="major">Dropping an item</h3>
+								<h3 class="major">Procedural level layout</h3>
 								<p>The ToggleInventory function deals with any situation where the Inventory is opened or closed, and creates or removes the Inventory UI as appropriate. This covers situations where a chest is interacted with and both Player and Chest inventories are opened, pressing Tab to open the Player Inventory, or pressingthe "X" button to close any Inventory. There is a bool called "IsTransferInventory" to tell the function if there is another inventory to close other than the Player's.</p>
 
 								<ul class="actions">
 									<li>
-									<button class="button">See Code</button>
+									<button class="button">See Level Generation Code</button>
 									<div class="codecontent">
-										i = 0;
-		
-												while (!deck.isInOrder()) {
-												  print 'Iteration ' + i;
-												  deck.shuffle();
-												  i++;
-												}
-												
-												print 'It took ' + i + ' iterations to sort the deck.';
+<pre>public class LevelGenerator : MonoBehaviour
+{
+	public GameObject layoutRoom;
+	public Color startColour, endColour;
+
+	public int distanceToEnd;
+
+	public Transform generatorPoint;
+
+	public enum Direction { up, right, down, left};
+	public Direction selectedDirection;
+
+	public float xOffset = 18f, yOffset = 10f;
+
+	public LayerMask whatisRoom;
+
+	private GameObject endRoom;
+
+	private List<GameObject> layoutRoomObjects = new List<GameObject>();
+
+	public List<RoomPrefab> roomPrefabs = new List<RoomPrefab>();
+
+	public RoomCenter centerStart, centerEnd;
+	public RoomCenter[] potentialCentersEasy;
+	public RoomCenter[] potentialCentersHard;
+
+	private List<GameObject> generatedOutlines = new List<GameObject>();
+
+	// Start is called before the first frame update
+	void Start()
+	{   //Create start room
+		Instantiate(layoutRoom, generatorPoint.position, generatorPoint.rotation).GetComponent<SpriteRenderer>().color = startColour;
+
+		selectedDirection = (Direction)Random.Range(0, 4);
+		MoveGenerationPoint();
+
+		//Create a room, choose where the next room will be and repeat
+		for (int i = 0; i < distanceToEnd; i++)
+		{
+			GameObject newRoom = Instantiate(layoutRoom, generatorPoint.position, generatorPoint.rotation);
+
+			layoutRoomObjects.Add(newRoom);
+
+			if (i + 1 == distanceToEnd)
+			{
+				newRoom.GetComponent<SpriteRenderer>().color = endColour;
+				layoutRoomObjects.RemoveAt(layoutRoomObjects.Count - 1);
+				endRoom = newRoom;
+			}
+			selectedDirection = (Direction)Random.Range(0, 4);
+			MoveGenerationPoint();
+
+			while (Physics2D.OverlapCircle(generatorPoint.position, .2f, whatisRoom))
+			{
+				MoveGenerationPoint();
+			}
+		}
+
+		//create room outlines
+		CreateRoomOutline(Vector3.zero, 0);
+		foreach(GameObject room in layoutRoomObjects)
+		{
+			int position = layoutRoomObjects.IndexOf(room);
+			CreateRoomOutline(room.transform.position, position);
+		}
+		CreateRoomOutline(endRoom.transform.position, distanceToEnd - 1);
+
+		//Create the room centers that will go inside the room outlines
+		foreach(GameObject outline in generatedOutlines)
+		{
+			bool generateCenter = true;
+
+			//Create specific start room center
+			if (outline.transform.position == Vector3.zero)
+			{
+				Instantiate(centerStart, outline.transform.position, transform.rotation).theRoom = outline.GetComponent<Room>();
+				generateCenter = false;
+			}
+			//Create specific end room center
+			if (outline.transform.position == endRoom.transform.position)
+			{
+				Instantiate(centerEnd, outline.transform.position, transform.rotation).theRoom = outline.GetComponent<Room>();
+				generateCenter = false;
+			}
+			//Decide difficulty of room center based on how far to the end of the level it is
+			if (generateCenter)
+			{
+				if (outline.GetComponent<Room>().roomNumber / distanceToEnd <= 0.25f)
+				{
+					int centerSelect = Random.Range(0, potentialCentersEasy.Length);
+
+					Instantiate(potentialCentersEasy[centerSelect], outline.transform.position, transform.rotation).theRoom = outline.GetComponent<Room>();
+				}
+				else
+				{
+					int centerSelect = Random.Range(0, potentialCentersHard.Length);
+
+					Instantiate(potentialCentersHard[centerSelect], outline.transform.position, transform.rotation).theRoom = outline.GetComponent<Room>();
+				}
+				
+			}
+		}
+	}
+
+	// Update is called once per frame
+	void Update()
+	{
+#if UNITY_EDITOR
+		if (Input.GetKey(KeyCode.R))
+		{
+			Scene scene = SceneManager.GetActiveScene(); SceneManager.LoadScene(scene.name);
+		}
+
+#endif
+	}
+
+	//Choose where the rooms will spawn
+	public void MoveGenerationPoint()
+	{
+		switch (selectedDirection)
+		{
+			case Direction.up:
+				generatorPoint.position += new Vector3(0f, yOffset, 0f);
+				break;
+
+			case Direction.right:
+				generatorPoint.position += new Vector3(xOffset, 0f, 0f);
+				break;
+
+			case Direction.down:
+				generatorPoint.position += new Vector3(0f, -yOffset, 0f);
+				break;
+
+			case Direction.left:
+				generatorPoint.position += new Vector3(-xOffset, 0f, 0f);
+				break;
+		}
+	}
+
+	//Decide which Room outline will spawn so the rooms connect
+	private RoomPrefab PickRoom(bool exitUp, bool exitRight, bool exitDown, bool exitLeft)
+	{
+		foreach (RoomPrefab rp in roomPrefabs)
+		{
+			if (rp.exitUp == exitUp && rp.exitRight == exitRight && rp.exitDown == exitDown && rp.exitLeft == exitLeft)
+			{
+				return rp;
+			}
+		}
+		return null;
+	}
+
+	//Create the room outline
+	public void CreateRoomOutline(Vector3 position, int roomNumber)
+	{
+		bool exitUp = Physics2D.OverlapCircle(position + new Vector3(0, yOffset), .2f, whatisRoom);
+		bool exitDown = Physics2D.OverlapCircle(position + new Vector3(0, -yOffset), .2f, whatisRoom);
+		bool exitRight = Physics2D.OverlapCircle(position + new Vector3(xOffset, 0), .2f, whatisRoom);
+		bool exitLeft = Physics2D.OverlapCircle(position + new Vector3(-xOffset, 0), .2f, whatisRoom);
+
+		var roomPrefab = PickRoom(exitUp, exitRight, exitDown, exitLeft);
+		if (roomPrefab != null)
+		{
+			var room = Instantiate(roomPrefab.prefab, position, Quaternion.identity, transform);
+			room.GetComponent<Room>().roomNumber = roomNumber;
+			generatedOutlines.Add(room);
+		}
+	}
+}
+
+[System.Serializable]
+public class RoomPrefab
+{
+	public bool exitUp;
+	public bool exitRight;
+	public bool exitDown;
+	public bool exitLeft;
+	public GameObject prefab;
+} </pre>
 									</div>
 									</li>
 									</ul>
