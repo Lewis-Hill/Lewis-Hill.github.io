@@ -381,10 +381,12 @@
 								<video class="image left" controls src="images/Roguelike/Videos/Level generation.mp4"></video>
 
 								<h3 class="major">Different rooms every time</h3>
-								<p>When the mouse is held on a slot, that slot creates a DragDrop operation and the Drag UI icon which takes the attributes of the item. The original slot is wiped to make the dragging more convincing. The DragDrop operation also takes the Structure attributes from the specific slot as an Input variable, so that it knows how to transfer the item when it is dropped on</p>
+								<p>The rooms are made up out of 2 pre-made parts, the outline and the center. The outline contains the exits, and is generated to connect each room together, while the center contains the enemies, objects and floor tiles. There are lists for varieties of both, the outlines list containing every combination of exits possible, and the centers lists containing pre-placed elements to make for purposeful gameplay encounters. The centers lists are split up into easy and hard levels.</p>
 
 								<h3 class="major">Procedural level layout</h3>
-								<p>The ToggleInventory function deals with any situation where the Inventory is opened or closed, and creates or removes the Inventory UI as appropriate. This covers situations where a chest is interacted with and both Player and Chest inventories are opened, pressing Tab to open the Player Inventory, or pressingthe "X" button to close any Inventory. There is a bool called "IsTransferInventory" to tell the function if there is another inventory to close other than the Player's.</p>
+								<p>The "Generation Point" object starts at 0,0 and an rectangle icon is created for the start room. The Point then translates randomly in one of 4 directions, creates an icon, and repeats until the specified number of icons have been created. This is to prepare for creating the room outlines, and these icons are also used to visualise the mini-map. If the Point happens to overlap an existing room, it chooses a direction and translates in that direction until an empty space is found.</p>
+								<p>To create the room outlines, for every room, an overlap circle checks in each direction to see which rooms are surrounding it, and chooses from the list of pre-made room outlines to perfectly connect each room with exits.</p>
+								<p>The room centers are then created from a list of easy and hard room centers, which are placed so that the levels are harder closer towards the end of the level. The start and end room centers are pre-determined. These steps ensure that there is a high chance that no two rooms will be the same, and that the layout of rooms will be unique to every run.</p>
 
 								<ul class="actions">
 									<li>
