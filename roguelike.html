@@ -79,7 +79,7 @@
 							<div class="inner">
 								<video class="image left" controls src="images/Roguelike/Videos/Movement and camera.mp4"></video>			
 								<h3 class="major">Movement</h3>
-								<p>After picking up an item using the Interact Interface, the function AddToInventory is called on the Player's Inventory Component. The Data Structure attached to the Item tells the function all the attributes the slot should have. If the Item already exists in the Player's Inventory, it checks to see if the picked up item can be added to an existing slot. If not, a new slot is created for that item.</p>
+								<p></p>
 
 								<ul class="actions">
 									<li>
@@ -382,7 +382,7 @@
 
 								<h3 class="major">Different rooms every time</h3>
 								<p>The rooms are made up out of 2 pre-made parts, the outline and the center. The outline contains the exits, and is generated to connect each room together, while the center contains the enemies, objects and floor tiles.</p>
-								<p>There are lists for varieties of both: the outlines list containing every combination of exits possible, and the centers lists containing pre-placed elements to make for purposeful gameplay encounters. The centers lists are split up into easy and hard levels.</p>
+								<p>There are lists for varieties of both: the outlines list containing every combination of exits possible, and the centers lists containing pre-placed elements to make for purposeful gameplay encounters. The centers lists are split up into easy and hard levels. Building the varieties of outlines and centers was easy as I created a tileset.</p>
 
 								<h3 class="major">Procedural level layout</h3>
 								<p>The "Generation Point" object starts at 0,0 and an rectangle icon is created for the start room. The Point then translates randomly in one of 4 directions, creates an icon, and repeats until the specified number of icons have been created. This is to prepare for creating the room outlines, and these icons are also used to visualise the mini-map. If the Point happens to overlap an existing room, it chooses a direction and translates in that direction until an empty space is found.</p>
@@ -596,30 +596,460 @@ public class RoomPrefab
 
 								<h3 class="major">Reincarnation
 								</h3>
-								<p>I made creating new objects such as Chests and NPCs, with their own Inventory, as simple as creating a child class of the "Container" Blueprint, which comes with its own Inventory Component. From there, you just give it a new static mesh, choose the name of the Container and decide how many slots the Inventory will have.</p>
-								<p>Once set in the level, you can easily add the items that will start off in the Containers. You can also choose whether it will have a Quest for the Player (For NPCs), and set the Item the Player will need to donate for the Quest, and how many.</p>
+								<p>The reincarnation mechanic is what the game is mostly revolves around: when the Player's health becomes 0, instead of a game over, you reincarnate and become stronger. In contrast, when the Player is fully healed they get weaker and can lead to a game over. This means the Player has to find ways of damaging themselves while the enemies attempt to heal them.</p>
+								<p>There are multiple objects the Player can find in the rooms to damage themselves, such as triggering arrows to fire from a statue, to coaxing enemies to fire at uneven structures and causing debris to fall from the ceiling.</p>
 
 								<h3 class="major">Getting stronger with cards
 								</h3>
-								<p>I made creating new objects such as Chests and NPCs, with their own Inventory, as simple as creating a child class of the "Container" Blueprint, which comes with its own Inventory Component. From there, you just give it a new static mesh, choose the name of the Container and decide how many slots the Inventory will have.</p>
-								<p>Once set in the level, you can easily add the items that will start off in the Containers. You can also choose whether it will have a Quest for the Player (For NPCs), and set the Item the Player will need to donate for the Quest, and how many.</p>
+								<p>Upon reincarnating, the Player picks between 3 cards which give the Player benefits, such as higher damage output or increased firerate. Better card rarities offer bonuses to these stats. Being fully healed by enemies causes the last aquired card to be destroyed. Being fully healed with no cards causes a game over.</p>
+								<p>The Card Manager takes care of the list of cards aqcuired and cards that appear for the Player to pick from. This includes the Inventory, where you can hover over cards aqcuired to see their stats. The script for the Card itself deals with the information it holds, such as the stats, rarity and ability.</p>
 
 								<ul class="actions">
 									<li>
-									<button class="button">See Code</button>
+									<button class="button">See Reincarnation Card Code</button>
 									<div class="codecontent">
-										i = 0;
-		
-												while (!deck.isInOrder()) {
-												  print 'Iteration ' + i;
-												  deck.shuffle();
-												  i++;
-												}
-												
-												print 'It took ' + i + ' iterations to sort the deck.';
+<pre>public class ReincarnationCard : MonoBehaviour
+{
+	public Animator anim;
+
+	public bool isLeft, isRight, isChosen, isCurseCard;
+
+	public RectTransform rectTransform;
+
+	public Text goodEffectText, badEffectText, titleText, cursedText, cursedTextTwo;
+
+	public int damageAmount, healthAmount, healthOnReincarnateAmount, damageTakenIncrease, healAmount, cardRarity;
+	public float fireRateIncrease;
+
+	public Sprite[] cardRarities, cardRaritiesHighlighted;
+	public Sprite cardRarityHighlighted;
+	public GameObject audioManager;
+
+	public enum cardType { damageGivenUpHealthUp, healthDownDamageGivenDown, damageTakenIncreaseHealthUp, fireRateUpDamageDown};
+	public enum curseCardType { takeExtraHeal};
+	public cardType selectedType;
+	public curseCardType selectedCurse;
+
+	// Start is called before the first frame update
+	void Start()
+	{
+		audioManager = GameObject.Find("Audio Manager");
+
+		if (!isCurseCard)
+		{
+			cursedText.gameObject.SetActive(false);
+			cursedTextTwo.gameObject.SetActive(false);
+			cardRarity = Random.Range(0, 4);
+		}
+		else
+		{
+			goodEffectText.gameObject.SetActive(false);
+			badEffectText.gameObject.SetActive(false);
+			cardRarity = 4;
+		}
+
+		cardRarityHighlighted = cardRaritiesHighlighted[cardRarity];
+
+		gameObject.GetComponent<Image>().sprite = cardRarities[cardRarity];
+
+		if (!isCurseCard)
+		{
+			selectedType = (cardType)Random.Range(0, 4);
+		}
+		else
+		{
+			selectedCurse = (curseCardType)(0);
+		}
+
+		//Set the card rarity
+		if (cardRarity == 0)
+		{
+			titleText.text = "Common";
+		}
+		if (cardRarity == 1)
+		{
+			titleText.text = "Rare";
+		}
+		if (cardRarity == 2)
+		{
+			titleText.text = "Epic";
+		}
+		if (cardRarity == 3)
+		{
+			titleText.text = "Legendary";
+		}
+		if (cardRarity == 4)
+		{
+			titleText.text = "Curse";
+		}
+
+		//Set the functionality and text for the various card effects
+		switch (selectedType)
+		{
+			case cardType.damageGivenUpHealthUp:
+				damageAmount = Random.Range(6, 9) + cardRarity;
+				healthAmount = Random.Range(6, 9) - cardRarity;
+				goodEffectText.text = "+" + damageAmount + " damage";
+				badEffectText.text = "+" + healthAmount + " max health";
+				break;
+
+			case cardType.healthDownDamageGivenDown:
+				damageAmount = Random.Range(8, 11) - cardRarity;
+				healthOnReincarnateAmount = Random.Range(8, 11) + cardRarity;
+				goodEffectText.text = "-" + healthOnReincarnateAmount + " health after reincarnate";
+				badEffectText.text = "-" + damageAmount + " damage";
+				break;
+
+			case cardType.damageTakenIncreaseHealthUp:
+				damageTakenIncrease = Random.Range(9, 12) + cardRarity;
+				healthAmount = Random.Range(7, 10) - cardRarity;
+				goodEffectText.text = "+" + damageTakenIncrease + " damage taken from objects";
+				badEffectText.text = "+" + healthAmount + " max health";
+				break;
+
+			case cardType.fireRateUpDamageDown:
+				fireRateIncrease = Random.Range(4, 5) * 0.1f + (cardRarity * 0.1f);
+				damageAmount = Random.Range(7, 10) - cardRarity;
+				goodEffectText.text = "+" + fireRateIncrease + " shots per second";
+				badEffectText.text = "-" + damageAmount + " damage";
+				break;
+		}
+
+		switch (selectedCurse)
+		{
+			case curseCardType.takeExtraHeal:
+				healAmount = 4;
+				cursedText.text = "+" + healAmount + " heal given by enemies";
+				cursedTextTwo.text = "Curse cards cannot be removed";
+				break;
+		}
+	}
+
+	// Update is called once per frame
+	void Update()
+	{
+		if (UIController.instance.isReincarnationCardClicked && !isChosen)
+		{
+			anim.SetBool("isDiscarded", true);
+		}
+	}
+
+	public void Hoverable()
+	{
+		anim.SetBool("isHoverable", true);
+	}
+
+	public void OnMouseHover()
+	{
+		if (anim.GetBool("isHoverable"))
+		{
+			anim.SetBool("isMouseHover", true);
+			//audioManager.GetComponent<AudioManager>().PlaySFX(2);
+		}
+	}
+
+	public void OffMouseHover()
+	{
+		if (anim.GetBool("isMouseHover"))
+		{
+			anim.SetBool("isMouseHover", false);
+		}
+	}
+
+	//When the Player chooses a card, apply the effects 
+	public void OnMouseClick()
+	{
+		if (anim.GetBool("isClickable") && anim != null)
+		{
+			audioManager.GetComponent<AudioManager>().PlaySFX(3);
+			UIController.instance.isReincarnationCardClicked = true;
+			isChosen = true;
+			anim.SetBool("isMouseClick", true);
+			anim.SetBool("isHoverable", false);
+
+			switch (selectedType)
+			{
+				case cardType.damageGivenUpHealthUp:
+					PlayerController.instance.IncreaseMaxHealth(healthAmount);
+					Gun.instance.IncreaseDamageToGive(damageAmount);
+					break;
+
+				case cardType.healthDownDamageGivenDown:
+					PlayerController.instance.DecreaseHealthOnReincarnation(healthOnReincarnateAmount);
+					Gun.instance.IncreaseDamageToGive(-damageAmount);
+					PlayerController.instance.IncreaseMaxHealth(0);
+					break;
+
+				case cardType.damageTakenIncreaseHealthUp:
+					PlayerController.instance.IncreaseDamageTaken(damageTakenIncrease);
+					PlayerController.instance.IncreaseMaxHealth(healthAmount);
+					break;
+
+				case cardType.fireRateUpDamageDown:
+					Gun.instance.IncreaseFireRate(fireRateIncrease);
+					Gun.instance.IncreaseDamageToGive(-damageAmount);
+					PlayerController.instance.IncreaseMaxHealth(0);
+					break;
+			}
+
+			switch (selectedCurse)
+			{
+				case curseCardType.takeExtraHeal:
+					PlayerController.instance.IncreaseHealToTake(healAmount);
+					PlayerController.instance.IncreaseMaxHealth(0);
+					break;
+			}
+
+			CardManager.instance.Equip(this);
+
+			anim.SetBool("isClickable", false); 
+
+			Debug.Log("Click!");
+		}
+	}
+
+	//Reverse the card effects if destroyed
+	public void OnRemove()
+	{
+		audioManager.GetComponent<AudioManager>().LoudenMusic();
+
+		//Remove the stats and set current health to OnReinarncateHealth and Unpause the game
+		switch (selectedType)
+		{
+			case cardType.damageGivenUpHealthUp:
+				PlayerController.instance.IncreaseMaxHealth(-healthAmount);
+				Gun.instance.IncreaseDamageToGive(-damageAmount);
+				break;
+
+			case cardType.healthDownDamageGivenDown:
+				PlayerController.instance.DecreaseHealthOnReincarnation(-healthOnReincarnateAmount);
+				Gun.instance.IncreaseDamageToGive(damageAmount);
+				PlayerController.instance.IncreaseMaxHealth(0);
+				break;
+
+			case cardType.damageTakenIncreaseHealthUp:
+				PlayerController.instance.IncreaseDamageTaken(-damageTakenIncrease);
+				PlayerController.instance.IncreaseMaxHealth(-healthAmount);
+				break;
+
+			case cardType.fireRateUpDamageDown:
+				Gun.instance.IncreaseFireRate(-fireRateIncrease);
+				Gun.instance.IncreaseDamageToGive(damageAmount);
+				PlayerController.instance.IncreaseMaxHealth(0);
+				break;
+		}
+
+		switch (selectedCurse)
+		{
+			case curseCardType.takeExtraHeal:
+				PlayerController.instance.IncreaseHealToTake(-healAmount);
+				PlayerController.instance.IncreaseMaxHealth(0);
+				break;
+		}
+
+		PlayerController.instance.currentHealth = PlayerController.instance.onReincarnateHealth;
+		GameManager.instance.UnpauseGame();
+		PlayerController.instance.isDeincarnated = false;
+		PlayerController.instance.ActivateInvincibility(2f);
+	}
+
+	public void PlaySound()
+	{
+		audioManager.GetComponent<AudioManager>().PlaySFX(2);
+	}
+}</pre>
 									</div>
 									</li>
 									</ul>
+
+									<ul class="actions">
+										<li>
+										<button class="button">See Card Manager Code</button>
+										<div class="codecontent">
+<pre>public class CardManager : MonoBehaviour
+{
+	public static CardManager instance;
+
+	#region Singleton
+	void Awake()
+	{
+		instance = this;
+	}
+
+	#endregion
+
+	public List<ReincarnationCard> currentCards = new List<ReincarnationCard>();
+
+	public List<GameObject> cardIcons = new List<GameObject>();
+	public List<GameObject> curseCardIcons = new List<GameObject>();
+	private float xOffset = 60f;
+
+	public GameObject cardIconImage;
+	public Transform cardIconHolder, curseCardIconHolder;
+
+	[HideInInspector]
+	public bool inventoryOpen = false;
+
+	public RectTransform cardIconBackground, cursedCardIconBackground;
+
+	public Image fadeScreen;
+
+	public Text inventoryText;
+
+	public GameObject audioManager;
+
+	public GameObject inventoryTutorial;
+
+	public bool gameOver;
+
+	private void Start()
+	{
+		instance = this;
+		audioManager = GameObject.Find("Audio Manager");
+	}
+
+	private void Update()
+	{
+		if (Input.GetKeyDown(KeyCode.I))
+		{
+			if (inventoryOpen)
+			{
+				CloseInventory();
+			}
+			else if (!GameManager.instance.isPausedMenu && !GameManager.instance.isPausedReincarnate && cardIcons.Count + curseCardIcons.Count > 0)
+			{
+				OpenInventory();
+			}
+		}
+	}
+
+	//When the Player chooses a card, equip it 
+	public void Equip (ReincarnationCard newCard)
+	{
+		ReincarnationCard createdCard = newCard;
+
+		if (!newCard.isCurseCard)
+		{
+			currentCards.Add(newCard);
+			cardIconBackground.gameObject.SetActive(true);
+		}
+		else
+		{
+			cursedCardIconBackground.gameObject.SetActive(true);
+			cardIconBackground.gameObject.SetActive(true);
+		}
+
+		AddCardIcon(createdCard);
+	}
+
+	//Remove the most recently aqcuired card
+	public void Unequip()
+	{
+		if (currentCards.Count > 0)
+		{
+			audioManager.GetComponent<AudioManager>().QuietenMusic();
+			audioManager.GetComponent<AudioManager>().PlaySFX(13);
+			audioManager.GetComponent<AudioManager>().StopSFX(19);
+
+			//Start the "Remove" animation for the last card in the list, set the position to be centered and remove from the list
+			currentCards[currentCards.Count - 1].anim.SetBool("isRemoved", true);
+			currentCards[currentCards.Count - 1].gameObject.transform.SetParent(UIController.instance.reincarnationCardHolder.transform);
+			currentCards.RemoveAt(currentCards.Count - 1);
+
+			if (!PlayerController.instance.canMove)
+			{
+				PlayerController.instance.canMove = true;
+			}
+
+			RemoveCardIcon();
+
+			if (cardIcons.Count + curseCardIcons.Count == 0)
+			{
+				cardIconBackground.gameObject.SetActive(false);
+			}
+		}
+		else
+		{
+			gameOver = true;
+			Debug.Log("Game Over!");
+			GameManager.instance.GameOver();
+		}
+	}
+
+	//Adds the icon to the Inventory
+	public void AddCardIcon(ReincarnationCard newCard)
+	{
+		if (newCard.isCurseCard)
+		{
+			GameObject card = Instantiate(cardIconImage, Vector3.zero, transform.rotation, curseCardIconHolder.transform);
+			card.transform.localPosition = new Vector3(xOffset * (curseCardIcons.Count + 1), 0);
+			card.GetComponent<CardIcon>().theCard = newCard;
+			card.GetComponent<Image>().sprite = newCard.cardRarities[newCard.cardRarity];
+			curseCardIcons.Add(card);
+			cursedCardIconBackground.sizeDelta = new Vector3(cursedCardIconBackground.sizeDelta.x + 30f, cardIconBackground.sizeDelta.y);
+		}
+		else if (!newCard.isCurseCard)
+		{
+			GameObject card = Instantiate(cardIconImage, Vector3.zero, transform.rotation, cardIconHolder.transform);
+			card.transform.localPosition = new Vector3(xOffset * (cardIcons.Count + 1), 0);
+			card.GetComponent<CardIcon>().theCard = newCard;
+			card.GetComponent<Image>().sprite = newCard.cardRarities[newCard.cardRarity];
+			cardIcons.Add(card);
+			cardIconBackground.sizeDelta = new Vector3(cardIconBackground.sizeDelta.x + 30f, cardIconBackground.sizeDelta.y);
+		}
+		
+	}
+
+	//Removes the icon from the Inventory
+	public void RemoveCardIcon()
+	{
+		GameObject card = cardIcons[cardIcons.Count - 1];
+		cardIcons.RemoveAt(cardIcons.Count - 1);
+		Destroy(card.gameObject);
+		cardIconBackground.sizeDelta = new Vector3(cardIconBackground.sizeDelta.x - 30f, cardIconBackground.sizeDelta.y);
+	}
+
+	public void OpenInventory()
+	{
+		if (!TutorialManager.instance.isInventoryTutorialFinished)
+		{
+			inventoryTutorial.gameObject.SetActive(true);
+		}
+
+		inventoryOpen = true;
+		GameManager.instance.PauseGame();
+		fadeScreen.color = new Color(fadeScreen.color.r, fadeScreen.color.g, fadeScreen.color.b, Mathf.MoveTowards(fadeScreen.color.a, 0.64f, UIController.instance.fadeSpeed));
+		inventoryText.text = "Close Inventory";
+	}
+
+	public void CloseInventory()
+	{
+		inventoryOpen = false;
+		inventoryTutorial.gameObject.SetActive(false);
+
+		foreach (GameObject card in cardIcons)
+		{
+			card.GetComponent<CardIcon>().OffMouseHover();
+		}
+
+		if (curseCardIcons.Count > 0)
+		{
+			foreach (GameObject card in curseCardIcons)
+			{
+				card.GetComponent<CardIcon>().OffMouseHover();
+			}
+		}
+
+		fadeScreen.color = new Color(fadeScreen.color.r, fadeScreen.color.g, fadeScreen.color.b, Mathf.MoveTowards(fadeScreen.color.a, 0f, UIController.instance.fadeSpeed));
+
+		GameManager.instance.UnpauseGame();
+
+		inventoryText.text = "Open Inventory";
+	}
+}</pre>
+										</div>
+										</li>
+										</ul>
 
 								<ul class="actions">
 									<li><a href="#Top" class="button primary">Jump to top</a></li>
