@@ -179,7 +179,7 @@ input::-moz-focus-inner {
   
   /* Style the collapsible content. Note: hidden by default */
   .codecontent {
-	max-width: 80%;
+	max-width: 1000px;
 	padding: 0 18px;
 	display: none;
 	overflow: hidden;
