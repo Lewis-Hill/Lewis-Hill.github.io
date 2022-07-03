@@ -76,288 +76,155 @@
 							<div class="inner">
 								<video class="image left" controls src="images/gamejam/Checkpoints.mp4"></video>			
 								<h3 class="major">Checkpoints</h3>
-								<p>The Character is controlled with WASD, and able to aim and use their weapon using the mouse. They can also roll using Spacebar, giving them a brief period of invincibility against enemy projectiles. The Player also faces left or right depending on which side the Mouse cursor is pointing.</p>
-								<p>The Player Controller script deals with all of the above, aswell as dealing with the Player health and other stats. I created animations for the states that the Player can be in, such as running, idling and rolling, plus there are different sprites used to indicate when the Player is damaged or healed.</p>
+								<p>The Checkpoints are the main gameplay element for our game. When the Player runs into a checkpoint, it adds more time to the timer, and counts towards the total checkpoints required to complete the level. If the timer runs out, it results in a game over and the level must be attempted again. </p>
+								<p>The Checkpoint Controller script, attached to the object of the same name, contains all the checkpoint related variables, such as the list of active checkpoints and how many should be active at once. The Change Checkpoints function is called when the Player collides with a checkpoint, and puts that checkpoint into a seperate "discarded" list so it can't be used again.</p>
+                                <p>The Checkpoint script is attached to each Checkpoint and calls the Change Checkpoint function on the Checkpoint Controller script whenever the Player collides with it.</p>
                                 <h3 class="major">Infinite mode</h3>
-								<p>The Character is controlled with WASD, and able to aim and use their weapon using the mouse. They can also roll using Spacebar, giving them a brief period of invincibility against enemy projectiles. The Player also faces left or right depending on which side the Mouse cursor is pointing.</p>
-								<p>The Player Controller script deals with all of the above, aswell as dealing with the Player health and other stats. I created animations for the states that the Player can be in, such as running, idling and rolling, plus there are different sprites used to indicate when the Player is damaged or healed.</p>
+								<p>Infinite mode does not have a win condition, instead the Player must accumulate checkpoints until time runs out. This is done with a simple checkbox in the inspector. In the Checkpoint Controller script, it cycles checkpoints between the Active and Disacrded list, ensuring that there are always checkpoints available to run into.</p>
 								<ul class="actions">
 									<li>
 									<button class="button">See Checkpoint Controller Code</button>
 									<div class="codecontent">
 											
-	<pre>class PlayerController : MonoBehaviour
-{
-	public static PlayerController instance;
-
-	public Rigidbody2D theRb;
-
-	public SpriteRenderer playerSR, bodySR, body2SR;
-
-	public Sprite player, playerHealed, body, bodyHealed, playerDamaged, bodyDamaged;
-
-	public float moveSpeed, activeMoveSpeed;
-
-	public Transform gunHand;
-
-	private Vector2 moveInput;
-
-	public Animator anim;
-
-	public float maxHealth, currentHealth, onReincarnateHealth;
-	private float reincarnateHealthToTakeAway = 30f;
-
-	public GameObject rock, firePoint, zEffect;
-
-	public bool isDeincarnated = false;
-
-	public bool canMove = true;
-
-	public float InvincibilityTimer, timeOfInvincibility;
-
-	public bool isInvincible = false;
-
-	public float dashSpeed, dashCooldown, dashInvincibilityTime, dashLength;
-
-	private float damageLength = 0.1f;
-	public int extraHealToTake = 0;
-
-	[Header("Card Effects")]
-	public bool isDoubleHeal;
-
-	[HideInInspector]
-	public int damageTakenIncrease = 0;
-
-	private float dashTimer, dashCooldownTimer, damageTimer;
-
-	public GameObject audioManager;
-
-	private void Awake()
-	{
-		instance = this;
-	}
-	// Start is called before the first frame update
-	void Start()
-	{
-		audioManager = GameObject.Find("Audio Manager");
-		activeMoveSpeed = moveSpeed;
-
-		//Start the game with the health given after reincarnating
-		onReincarnateHealth = maxHealth - reincarnateHealthToTakeAway;
-		currentHealth = onReincarnateHealth;
-	}
-
-	// Update is called once per frame
-	void Update()
-	{
-		//Handle movement
-		if (!GameManager.instance.isPausedReincarnate && !GameManager.instance.isPausedMenu)
-		{
-			if (damageTimer > 0)
-			{
-				damageTimer -= Time.deltaTime;
-			}
-			else
-			{
-				playerSR.sprite = player;
-				bodySR.sprite = body;
-				body2SR.sprite = body;
-			}
-
-			if (canMove)
-			{
-				{
-					if (isInvincible)
-					{
-						playerSR.color = new Color(1.0f, 1.0f, 1.0f, 0.5f);
-						if (InvincibilityTimer > 0)
-						{
-							InvincibilityTimer -= Time.deltaTime;
-						}
-						else
-						{
-							isInvincible = false;
-							playerSR.color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
-						}
-					}
-
-					moveInput.x = Input.GetAxisRaw("Horizontal");
-					moveInput.y = Input.GetAxisRaw("Vertical");
-
-					moveInput.Normalize();
-
-					theRb.velocity = moveInput * activeMoveSpeed;
-
-					Vector3 mousePos = Input.mousePosition;
-					Vector3 screenPoint = CameraController.instance.mainCamera.WorldToScreenPoint(transform.localPosition);
-
-					if (mousePos.x < screenPoint.x)
-					{
-						transform.localScale = new Vector3(-1f, 1f, 1f);
-						gunHand.localScale = new Vector3(-1.5f, -1.5f, 1f);
-					}
-					else
-					{
-						transform.localScale = new Vector3(1f, 1f, 1f);
-						gunHand.localScale = new Vector3(1.5f, 1.5f, 1f);
-					}
-
-					Vector2 offset = new Vector2(mousePos.x - screenPoint.x, mousePos.y - screenPoint.y);
-					float angle = Mathf.Atan2(offset.y, offset.x) * Mathf.Rad2Deg;
-
-					gunHand.rotation = Quaternion.Euler(0, 0, angle);
-
-					if (moveInput != Vector2.zero)
-					{
-						anim.SetBool("isMoving", true);
-					}
-					else
-					{
-						anim.SetBool("isMoving", false);
-					}
-
-					if (Input.GetKeyDown(KeyCode.Space) && dashTimer <= 0 && dashCooldownTimer <= 0)
-					{
-						audioManager.GetComponent<AudioManager>().PlaySFX(6);
-						activeMoveSpeed = dashSpeed;
-						ActivateInvincibility(dashInvincibilityTime);
-						dashTimer = dashLength;
-						anim.SetTrigger("Dash");
-					}
-
-					if (dashTimer > 0)
-					{
-						dashTimer -= Time.deltaTime;
-						if (dashTimer <= 0)
-						{
-							activeMoveSpeed = moveSpeed;
-							dashCooldownTimer = dashCooldown;
-						}
-					}
-
-					if (dashCooldownTimer > 0)
-					{
-						dashCooldownTimer -= Time.deltaTime;
-					}
-				}
-			}
-
-			else
-			{
-				theRb.velocity = Vector3.zero;
-				anim.SetBool("isMoving", false);
-				activeMoveSpeed = moveSpeed;
-				dashCooldownTimer = 0;
-				dashTimer = 0;
-
-				if (isInvincible)
-				{
-					isInvincible = false;
-					playerSR.color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
-					InvincibilityTimer = 0;
-				}
-			}
-		}
-
-		//If player is healed, Deincarnate 
-		if (currentHealth >= maxHealth && !isDeincarnated)
-		{
-			currentHealth = maxHealth;
-			isDeincarnated = true;
-
-			GameManager.instance.PauseGame();
-			CardManager.instance.Unequip();
-			//GameManager.instance.UnpauseGame();
-			//ActivateInvincibility(2f);
-		}
-	}
-
-	//This function covers being damaged by items and healed by enemies
-	public void TakeDamage(int damageToTake)
-	{
-		if (!isInvincible || damageToTake > 0)
-		{
-			if (damageToTake > currentHealth)
-			{
-				currentHealth = 0;
-			}
-			else
-			{
-				if (isDoubleHeal && damageToTake < 0)
-				{
-					currentHealth -= damageToTake * 2;
-				}
-				else
-				{
-					currentHealth -= damageToTake;
-				}
-			}
-		}
-	}
-
-	//One of the card abilities
-	public void IncreaseMaxHealth(int healthToIncrease)
-	{
-		maxHealth += healthToIncrease;
-		onReincarnateHealth = maxHealth - reincarnateHealthToTakeAway;
-		currentHealth = onReincarnateHealth;
-	}
-
-	//This is called when the Player rolls
-	public void ActivateInvincibility(float timeOfInvincibility)
-	{
-		isInvincible = true;
-		InvincibilityTimer = timeOfInvincibility;
-	}
-
-	//Trigger the visual effect for when the Player is damaged or healed
-	public void DamagedByEnemy(bool isEnemy)
-	{
-		if (isEnemy)
-		{
-			if (!isInvincible)
-			{
-				damageTimer = damageLength;
-				damageTimer = damageLength;
-				playerSR.sprite = playerHealed;
-				bodySR.sprite = bodyHealed;
-				body2SR.sprite = bodyHealed;
-			}
-		}
-
-		if (!isEnemy)
-		{
-			damageTimer = damageLength;
-			playerSR.sprite = playerDamaged;
-			bodySR.sprite = bodyDamaged;
-			body2SR.sprite = bodyDamaged;
-		}
-	}
-
-	//One of the card abilities
-	public void IncreaseDamageTaken(int damageIncrease)
-	{
-		damageTakenIncrease += damageIncrease;
-	}
-
-	//This occurs when a Hammer enemy knocks the Player out
-	public void KnockOut()
-	{
-		Instantiate(zEffect, new Vector3(transform.position.x, transform.position.y + 0.5f), transform.rotation, gameObject.transform);
-	}
-
-	//One of the card abilities
-	public void DecreaseHealthOnReincarnation(int healthAmount)
-	{
-		reincarnateHealthToTakeAway += healthAmount;
-	}
-
-	//One of the card abilities
-	public void IncreaseHealToTake(int heal)
-	{
-		extraHealToTake += heal;
-	}
-}</pre>
+	<pre>public class CheckpointController : MonoBehaviour
+        {
+            public List<Checkpoint> checkpoints = new List<Checkpoint>();
+            public List<Checkpoint> discardedCheckpoints = new List<Checkpoint>();
+            public int currentCheckpoint;
+            public int checkpointsCollected, checkpointsRequired, numberOfCheckpoints, grappleUses;
+            public int grapplesUsed;
+        
+            public float pitchToAdd, maxPitch, startingPitch;
+            public float checkpointsLeft;
+        
+            public bool isInfinite;
+        
+            public static CheckpointController instance;
+        
+            public GameObject audioManager;
+        
+            private void Awake()
+            {
+                instance = this;
+            }
+        
+            // Start is called before the first frame update
+            void Start()
+            {
+                //If playing on normal mode
+                if (!isInfinite)
+                {
+                    UIController.instance.checkpointText.gameObject.SetActive(true);
+                    checkpointsLeft = checkpointsRequired;
+                    UIController.instance.checkpointText.text = "Checkpoints remaining: " + checkpointsLeft;
+                }
+        
+                audioManager = GameObject.Find("Audio Manager");
+                // Player starts off with a certain amount of grapples
+                grapplesUsed = 0;
+        
+                // If there are checkpoints, set the first one to be active
+                if (checkpoints != null)
+                {
+                    for (int i = 0; i < numberOfCheckpoints; i++)
+                    {
+                        currentCheckpoint = Random.Range(0, checkpoints.Count - 1);
+                        checkpoints[currentCheckpoint].gameObject.SetActive(true);
+                        discardedCheckpoints.Add(checkpoints[currentCheckpoint].GetComponent<Checkpoint>());
+                        checkpoints.RemoveAt(currentCheckpoint);     
+                    }          
+                }
+            }
+        
+            // Update is called once per frame
+            void Update()
+            {
+                
+            }
+        
+            //After colliding with a checkpoint
+            public void ChangeCheckpoints(Checkpoint checkpoint)
+            {
+                if (!isInfinite)
+                {
+                    checkpointsLeft--;
+                    UIController.instance.checkpointText.text = "Checkpoints remaining: " + checkpointsLeft;
+                }
+        
+                UIController.instance.timerBreakTimer = UIController.instance.timerBreakLength;
+        
+                if (startingPitch + (UIController.instance.currentChain * pitchToAdd) > maxPitch)
+                {
+                    audioManager.GetComponent<AudioManager>().sfx[7].pitch = maxPitch;
+                    audioManager.GetComponent<AudioManager>().sfx[8].pitch = maxPitch;
+                    audioManager.GetComponent<AudioManager>().sfx[9].pitch = maxPitch;
+                }
+                else
+                {
+                    audioManager.GetComponent<AudioManager>().sfx[7].pitch = startingPitch + (UIController.instance.currentChain * pitchToAdd);
+                    audioManager.GetComponent<AudioManager>().sfx[8].pitch = startingPitch + (UIController.instance.currentChain * pitchToAdd);
+                    audioManager.GetComponent<AudioManager>().sfx[9].pitch = startingPitch + (UIController.instance.currentChain * pitchToAdd);
+                }
+        
+                int checkpointIndex = Random.Range(7, 10);
+                audioManager.GetComponent<AudioManager>().PlaySFX(checkpointIndex);
+                // Add 1 to amount of checkpoints collected
+                // Add more grapple uses
+                // Change grapple text
+                checkpointsCollected++;
+                grapplesUsed = 0;
+                UIController.instance.ReloadGrapples();
+        
+                // Meet the required checkpoints to win and you win!
+                if (checkpointsCollected >= checkpointsRequired && !isInfinite && !UIController.instance.hasWon)
+                {
+                    {
+                        audioManager.GetComponent<AudioManager>().PlaySFX(4);
+                        UIController.instance.hasWon = true;
+                        GameManager.instance.PauseUnPauseGame();
+                        UIController.instance.winText.gameObject.SetActive(true);
+                    }
+                }
+                else
+                {
+                    if (checkpoints.Count > 0)
+                    {
+                        //Choose another checkpoint
+                        currentCheckpoint = Random.Range(0, checkpoints.Count - 1);
+                        checkpoints[currentCheckpoint].gameObject.SetActive(true);
+        
+                        //Add checkpoint to the discard list and remove checkpoint from the active list
+                        discardedCheckpoints.Add(checkpoints[currentCheckpoint].GetComponent<Checkpoint>());
+                        checkpoints.RemoveAt(currentCheckpoint);
+                    }
+                    else if (isInfinite == true)
+                    {
+                        checkpointsCollected++;
+                        discardedCheckpoints.Remove(checkpoint);
+        
+                        foreach (Checkpoint c in discardedCheckpoints)
+                        {
+                            if (!c.gameObject.activeInHierarchy)
+                            {
+                                checkpoints.Add(c);
+                            }
+                        }  
+        
+                        foreach (Checkpoint c in checkpoints)
+                        {
+                            discardedCheckpoints.Remove(c);
+                        }
+        
+                        currentCheckpoint = Random.Range(0, checkpoints.Count - 1);
+                        checkpoints[currentCheckpoint].gameObject.SetActive(true);
+                        discardedCheckpoints.Add(checkpoints[currentCheckpoint].GetComponent<Checkpoint>());
+                        checkpoints.RemoveAt(currentCheckpoint);
+        
+                        checkpoints.Add(checkpoint);
+                    }
+                }
+            }
+        }</pre>
 									</div>
 									</li>
 									</ul>
@@ -367,278 +234,38 @@
                                         <button class="button">See Checkpoint Code</button>
                                         <div class="codecontent">
                                                 
-        <pre>class PlayerController : MonoBehaviour
-    {
-        public static PlayerController instance;
-    
-        public Rigidbody2D theRb;
-    
-        public SpriteRenderer playerSR, bodySR, body2SR;
-    
-        public Sprite player, playerHealed, body, bodyHealed, playerDamaged, bodyDamaged;
-    
-        public float moveSpeed, activeMoveSpeed;
-    
-        public Transform gunHand;
-    
-        private Vector2 moveInput;
-    
-        public Animator anim;
-    
-        public float maxHealth, currentHealth, onReincarnateHealth;
-        private float reincarnateHealthToTakeAway = 30f;
-    
-        public GameObject rock, firePoint, zEffect;
-    
-        public bool isDeincarnated = false;
-    
-        public bool canMove = true;
-    
-        public float InvincibilityTimer, timeOfInvincibility;
-    
-        public bool isInvincible = false;
-    
-        public float dashSpeed, dashCooldown, dashInvincibilityTime, dashLength;
-    
-        private float damageLength = 0.1f;
-        public int extraHealToTake = 0;
-    
-        [Header("Card Effects")]
-        public bool isDoubleHeal;
-    
-        [HideInInspector]
-        public int damageTakenIncrease = 0;
-    
-        private float dashTimer, dashCooldownTimer, damageTimer;
-    
-        public GameObject audioManager;
-    
-        private void Awake()
-        {
-            instance = this;
-        }
-        // Start is called before the first frame update
-        void Start()
-        {
-            audioManager = GameObject.Find("Audio Manager");
-            activeMoveSpeed = moveSpeed;
-    
-            //Start the game with the health given after reincarnating
-            onReincarnateHealth = maxHealth - reincarnateHealthToTakeAway;
-            currentHealth = onReincarnateHealth;
-        }
-    
-        // Update is called once per frame
-        void Update()
-        {
-            //Handle movement
-            if (!GameManager.instance.isPausedReincarnate && !GameManager.instance.isPausedMenu)
+        <pre>public class Checkpoint : MonoBehaviour
             {
-                if (damageTimer > 0)
+                public float timeToAdd;
+                public GameObject audioManager;
+            
+                // Start is called before the first frame update
+                void Start()
                 {
-                    damageTimer -= Time.deltaTime;
+                    // Make sure this gameobject is setactive(false) in the inspector
+            
+                    audioManager = GameObject.Find("Audio Manager");
                 }
-                else
+            
+                // Update is called once per frame
+                void Update()
                 {
-                    playerSR.sprite = player;
-                    bodySR.sprite = body;
-                    body2SR.sprite = body;
+                    
                 }
-    
-                if (canMove)
+            
+                private void OnTriggerEnter(Collider other)
                 {
+                    // If the Player walks into this, add time to the timer
+                    if (other.CompareTag("Player"))
                     {
-                        if (isInvincible)
-                        {
-                            playerSR.color = new Color(1.0f, 1.0f, 1.0f, 0.5f);
-                            if (InvincibilityTimer > 0)
-                            {
-                                InvincibilityTimer -= Time.deltaTime;
-                            }
-                            else
-                            {
-                                isInvincible = false;
-                                playerSR.color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
-                            }
-                        }
-    
-                        moveInput.x = Input.GetAxisRaw("Horizontal");
-                        moveInput.y = Input.GetAxisRaw("Vertical");
-    
-                        moveInput.Normalize();
-    
-                        theRb.velocity = moveInput * activeMoveSpeed;
-    
-                        Vector3 mousePos = Input.mousePosition;
-                        Vector3 screenPoint = CameraController.instance.mainCamera.WorldToScreenPoint(transform.localPosition);
-    
-                        if (mousePos.x < screenPoint.x)
-                        {
-                            transform.localScale = new Vector3(-1f, 1f, 1f);
-                            gunHand.localScale = new Vector3(-1.5f, -1.5f, 1f);
-                        }
-                        else
-                        {
-                            transform.localScale = new Vector3(1f, 1f, 1f);
-                            gunHand.localScale = new Vector3(1.5f, 1.5f, 1f);
-                        }
-    
-                        Vector2 offset = new Vector2(mousePos.x - screenPoint.x, mousePos.y - screenPoint.y);
-                        float angle = Mathf.Atan2(offset.y, offset.x) * Mathf.Rad2Deg;
-    
-                        gunHand.rotation = Quaternion.Euler(0, 0, angle);
-    
-                        if (moveInput != Vector2.zero)
-                        {
-                            anim.SetBool("isMoving", true);
-                        }
-                        else
-                        {
-                            anim.SetBool("isMoving", false);
-                        }
-    
-                        if (Input.GetKeyDown(KeyCode.Space) && dashTimer <= 0 && dashCooldownTimer <= 0)
-                        {
-                            audioManager.GetComponent<AudioManager>().PlaySFX(6);
-                            activeMoveSpeed = dashSpeed;
-                            ActivateInvincibility(dashInvincibilityTime);
-                            dashTimer = dashLength;
-                            anim.SetTrigger("Dash");
-                        }
-    
-                        if (dashTimer > 0)
-                        {
-                            dashTimer -= Time.deltaTime;
-                            if (dashTimer <= 0)
-                            {
-                                activeMoveSpeed = moveSpeed;
-                                dashCooldownTimer = dashCooldown;
-                            }
-                        }
-    
-                        if (dashCooldownTimer > 0)
-                        {
-                            dashCooldownTimer -= Time.deltaTime;
-                        }
+                        UIController.instance.AddTime(timeToAdd);
+                        UIController.instance.AddChain();
+                        CheckpointController.instance.ChangeCheckpoints(this);
+                        gameObject.SetActive(false);
+                        UIController.instance.chainTextAnim.SetTrigger("bounce");
                     }
                 }
-    
-                else
-                {
-                    theRb.velocity = Vector3.zero;
-                    anim.SetBool("isMoving", false);
-                    activeMoveSpeed = moveSpeed;
-                    dashCooldownTimer = 0;
-                    dashTimer = 0;
-    
-                    if (isInvincible)
-                    {
-                        isInvincible = false;
-                        playerSR.color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
-                        InvincibilityTimer = 0;
-                    }
-                }
-            }
-    
-            //If player is healed, Deincarnate 
-            if (currentHealth >= maxHealth && !isDeincarnated)
-            {
-                currentHealth = maxHealth;
-                isDeincarnated = true;
-    
-                GameManager.instance.PauseGame();
-                CardManager.instance.Unequip();
-                //GameManager.instance.UnpauseGame();
-                //ActivateInvincibility(2f);
-            }
-        }
-    
-        //This function covers being damaged by items and healed by enemies
-        public void TakeDamage(int damageToTake)
-        {
-            if (!isInvincible || damageToTake > 0)
-            {
-                if (damageToTake > currentHealth)
-                {
-                    currentHealth = 0;
-                }
-                else
-                {
-                    if (isDoubleHeal && damageToTake < 0)
-                    {
-                        currentHealth -= damageToTake * 2;
-                    }
-                    else
-                    {
-                        currentHealth -= damageToTake;
-                    }
-                }
-            }
-        }
-    
-        //One of the card abilities
-        public void IncreaseMaxHealth(int healthToIncrease)
-        {
-            maxHealth += healthToIncrease;
-            onReincarnateHealth = maxHealth - reincarnateHealthToTakeAway;
-            currentHealth = onReincarnateHealth;
-        }
-    
-        //This is called when the Player rolls
-        public void ActivateInvincibility(float timeOfInvincibility)
-        {
-            isInvincible = true;
-            InvincibilityTimer = timeOfInvincibility;
-        }
-    
-        //Trigger the visual effect for when the Player is damaged or healed
-        public void DamagedByEnemy(bool isEnemy)
-        {
-            if (isEnemy)
-            {
-                if (!isInvincible)
-                {
-                    damageTimer = damageLength;
-                    damageTimer = damageLength;
-                    playerSR.sprite = playerHealed;
-                    bodySR.sprite = bodyHealed;
-                    body2SR.sprite = bodyHealed;
-                }
-            }
-    
-            if (!isEnemy)
-            {
-                damageTimer = damageLength;
-                playerSR.sprite = playerDamaged;
-                bodySR.sprite = bodyDamaged;
-                body2SR.sprite = bodyDamaged;
-            }
-        }
-    
-        //One of the card abilities
-        public void IncreaseDamageTaken(int damageIncrease)
-        {
-            damageTakenIncrease += damageIncrease;
-        }
-    
-        //This occurs when a Hammer enemy knocks the Player out
-        public void KnockOut()
-        {
-            Instantiate(zEffect, new Vector3(transform.position.x, transform.position.y + 0.5f), transform.rotation, gameObject.transform);
-        }
-    
-        //One of the card abilities
-        public void DecreaseHealthOnReincarnation(int healthAmount)
-        {
-            reincarnateHealthToTakeAway += healthAmount;
-        }
-    
-        //One of the card abilities
-        public void IncreaseHealToTake(int heal)
-        {
-            extraHealToTake += heal;
-        }
-    }</pre>
+            }</pre>
                                         </div>
                                         </li>
                                         </ul>
