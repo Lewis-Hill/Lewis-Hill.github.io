@@ -77,13 +77,13 @@
 								<video class="image left" controls src="images/gamejam/Checkpoints.mp4"></video>			
 								<h3 class="major">Checkpoints</h3>
 								<p>The Checkpoints are the main gameplay element for our game. When the Player runs into a checkpoint, it adds more time to the timer, and counts towards the total checkpoints required to complete the level. If the timer runs out, it results in a game over and the level must be attempted again. </p>
-								<p>The Checkpoint Controller script, attached to the object of the same name, contains all the checkpoint related variables, such as the list of active checkpoints and how many should be active at once. The Change Checkpoints function is called when the Player collides with a checkpoint, and puts that checkpoint into a seperate "discarded" list so it can't be used again.</p>
-                                <p>The Checkpoint script is attached to each Checkpoint and calls the Change Checkpoint function on the Checkpoint Controller script whenever the Player collides with it.</p>
+								<p>The CheckpointController script, attached to the object of the same name, contains all the checkpoint related variables, such as the list of active checkpoints and how many should be active at once. The ChangeCheckpoints function is called when the Player collides with a checkpoint, and puts that checkpoint into a seperate "discarded" list so it can't be used again.</p>
+                                <p>The Checkpoint script is attached to each Checkpoint and calls the ChangeCheckpoint function on the CheckpointController script whenever the Player collides with it.</p>
                                 <h3 class="major">Infinite mode</h3>
-								<p>Infinite mode does not have a win condition, instead the Player must accumulate checkpoints until time runs out. This is done with a simple checkbox in the inspector. In the Checkpoint Controller script, it cycles checkpoints between the Active and Disacrded list, ensuring that there are always checkpoints available to run into.</p>
+								<p>Infinite mode does not have a win condition, instead the Player must accumulate checkpoints until time runs out. This is done with a simple checkbox in the inspector. In the CheckpointController script, it cycles checkpoints between the Active and Disacrded list, ensuring that there are always checkpoints available to run into.</p>
 								<ul class="actions">
 									<li>
-									<button class="button">See Checkpoint Controller Code</button>
+									<button class="button">See CheckpointController Code</button>
 									<div class="codecontent">
 											
 	<pre>public class CheckpointController : MonoBehaviour
@@ -286,195 +286,189 @@
 								</div>
 							</header>
 							<div class="inner">
-								<video class="image left" controls src="images/Roguelike/Videos/Level generation.mp4"></video>
+								<image class="image left" src="images/GameJam/GameUI.png"></image>
 
-								<h3 class="major">Different rooms every time</h3>
-								<p>The rooms are made up out of 2 pre-made parts, the outline and the center. The outline contains the exits, and is generated to connect each room together, while the center contains the enemies, objects and floor tiles.</p>
-								<p>There are lists for varieties of both: the outlines list containing every combination of exits possible, and the centers lists containing pre-placed elements to make for purposeful gameplay encounters. The centers lists are split up into easy and hard levels. Building the varieties of outlines and centers was easy as I created a tileset.</p>
+								<h3 class="major">UI and Audio</h3>
+								<p>All UI elements, such as the timer, number of checkpoints remaining, and icons representing amount grapple hook uses left, are programmed using the UIController script. It sets all these elements by talking to other scripts like the Checkpoint Controller script, for example when a Player runs through a checkpoint and the timer increases. The Audio is implemented through the Audio Manager script and calls for specific audio files whenever the relevant action is performed.</p>
 
 								<ul class="actions">
 									<li>
 									<button class="button">See UI Controller Code</button>
 									<div class="codecontent">
-<pre>public class LevelGenerator : MonoBehaviour
-{
-	public GameObject layoutRoom;
-	public Color startColour, endColour;
-
-	public int distanceToEnd;
-
-	public Transform generatorPoint;
-
-	public enum Direction { up, right, down, left};
-	public Direction selectedDirection;
-
-	public float xOffset = 18f, yOffset = 10f;
-
-	public LayerMask whatisRoom;
-
-	private GameObject endRoom;
-
-	private List<GameObject> layoutRoomObjects = new List<GameObject>();
-
-	public List<RoomPrefab> roomPrefabs = new List<RoomPrefab>();
-
-	public RoomCenter centerStart, centerEnd;
-	public RoomCenter[] potentialCentersEasy;
-	public RoomCenter[] potentialCentersHard;
-
-	private List<GameObject> generatedOutlines = new List<GameObject>();
-
-	// Start is called before the first frame update
-	void Start()
-	{   //Create start room
-		Instantiate(layoutRoom, generatorPoint.position, generatorPoint.rotation).GetComponent<SpriteRenderer>().color = startColour;
-
-		selectedDirection = (Direction)Random.Range(0, 4);
-		MoveGenerationPoint();
-
-		//Create a room, choose where the next room will be and repeat
-		for (int i = 0; i < distanceToEnd; i++)
-		{
-			GameObject newRoom = Instantiate(layoutRoom, generatorPoint.position, generatorPoint.rotation);
-
-			layoutRoomObjects.Add(newRoom);
-
-			if (i + 1 == distanceToEnd)
-			{
-				newRoom.GetComponent<SpriteRenderer>().color = endColour;
-				layoutRoomObjects.RemoveAt(layoutRoomObjects.Count - 1);
-				endRoom = newRoom;
-			}
-			selectedDirection = (Direction)Random.Range(0, 4);
-			MoveGenerationPoint();
-
-			while (Physics2D.OverlapCircle(generatorPoint.position, .2f, whatisRoom))
-			{
-				MoveGenerationPoint();
-			}
-		}
-
-		//create room outlines
-		CreateRoomOutline(Vector3.zero, 0);
-		foreach(GameObject room in layoutRoomObjects)
-		{
-			int position = layoutRoomObjects.IndexOf(room);
-			CreateRoomOutline(room.transform.position, position);
-		}
-		CreateRoomOutline(endRoom.transform.position, distanceToEnd - 1);
-
-		//Create the room centers that will go inside the room outlines
-		foreach(GameObject outline in generatedOutlines)
-		{
-			bool generateCenter = true;
-
-			//Create specific start room center
-			if (outline.transform.position == Vector3.zero)
-			{
-				Instantiate(centerStart, outline.transform.position, transform.rotation).theRoom = outline.GetComponent<Room>();
-				generateCenter = false;
-			}
-			//Create specific end room center
-			if (outline.transform.position == endRoom.transform.position)
-			{
-				Instantiate(centerEnd, outline.transform.position, transform.rotation).theRoom = outline.GetComponent<Room>();
-				generateCenter = false;
-			}
-			//Decide difficulty of room center based on how far to the end of the level it is
-			if (generateCenter)
-			{
-				if (outline.GetComponent<Room>().roomNumber / distanceToEnd <= 0.25f)
-				{
-					int centerSelect = Random.Range(0, potentialCentersEasy.Length);
-
-					Instantiate(potentialCentersEasy[centerSelect], outline.transform.position, transform.rotation).theRoom = outline.GetComponent<Room>();
-				}
-				else
-				{
-					int centerSelect = Random.Range(0, potentialCentersHard.Length);
-
-					Instantiate(potentialCentersHard[centerSelect], outline.transform.position, transform.rotation).theRoom = outline.GetComponent<Room>();
-				}
-				
-			}
-		}
-	}
-
-	// Update is called once per frame
-	void Update()
-	{
-#if UNITY_EDITOR
-		if (Input.GetKey(KeyCode.R))
-		{
-			Scene scene = SceneManager.GetActiveScene(); SceneManager.LoadScene(scene.name);
-		}
-
-#endif
-	}
-
-	//Choose where the rooms will spawn
-	public void MoveGenerationPoint()
-	{
-		switch (selectedDirection)
-		{
-			case Direction.up:
-				generatorPoint.position += new Vector3(0f, yOffset, 0f);
-				break;
-
-			case Direction.right:
-				generatorPoint.position += new Vector3(xOffset, 0f, 0f);
-				break;
-
-			case Direction.down:
-				generatorPoint.position += new Vector3(0f, -yOffset, 0f);
-				break;
-
-			case Direction.left:
-				generatorPoint.position += new Vector3(-xOffset, 0f, 0f);
-				break;
-		}
-	}
-
-	//Decide which Room outline will spawn so the rooms connect
-	private RoomPrefab PickRoom(bool exitUp, bool exitRight, bool exitDown, bool exitLeft)
-	{
-		foreach (RoomPrefab rp in roomPrefabs)
-		{
-			if (rp.exitUp == exitUp && rp.exitRight == exitRight && rp.exitDown == exitDown && rp.exitLeft == exitLeft)
-			{
-				return rp;
-			}
-		}
-		return null;
-	}
-
-	//Create the room outline
-	public void CreateRoomOutline(Vector3 position, int roomNumber)
-	{
-		bool exitUp = Physics2D.OverlapCircle(position + new Vector3(0, yOffset), .2f, whatisRoom);
-		bool exitDown = Physics2D.OverlapCircle(position + new Vector3(0, -yOffset), .2f, whatisRoom);
-		bool exitRight = Physics2D.OverlapCircle(position + new Vector3(xOffset, 0), .2f, whatisRoom);
-		bool exitLeft = Physics2D.OverlapCircle(position + new Vector3(-xOffset, 0), .2f, whatisRoom);
-
-		var roomPrefab = PickRoom(exitUp, exitRight, exitDown, exitLeft);
-		if (roomPrefab != null)
-		{
-			var room = Instantiate(roomPrefab.prefab, position, Quaternion.identity, transform);
-			room.GetComponent<Room>().roomNumber = roomNumber;
-			generatedOutlines.Add(room);
-		}
-	}
-}
-
-[System.Serializable]
-public class RoomPrefab
-{
-	public bool exitUp;
-	public bool exitRight;
-	public bool exitDown;
-	public bool exitLeft;
-	public GameObject prefab;
-} </pre>
+<pre>public class UIController : MonoBehaviour
+    {
+        public TextMeshProUGUI timerText, chainText, pauseText, loseText, winText, checkpointText;
+        public float startTimerLength, timerBreakLength;
+    
+        [HideInInspector]
+        public float timerBreakTimer;
+    
+        private float timer;
+    
+        [HideInInspector]
+        public bool hasWon, hasLost;
+    
+        [HideInInspector]
+        public int currentChain;
+        private float chainTimer;
+        public float chainTimerLength, reduceTimePerChain, minimumChainTime;
+    
+        public Slider chainSlider;
+        public Button restartGameButton, exitToMenuButton;
+    
+        public static UIController instance;
+    
+        public Image grappleIcon, dot;
+        public Sprite grappleActive, grappleInactive, dotRed, dotGreen;
+        public List<Image> grappleIcons = new List<Image>();
+    
+        public GameObject audioManager;
+    
+        public Animator timerAnim, chainTextAnim;
+    
+        private void Awake()
+        {
+            instance = this;
+        }
+    
+        // Start is called before the first frame update
+        void Start()
+        {
+            audioManager = GameObject.Find("Audio Manager");
+    
+            if (CheckpointController.instance.grappleUses > 0 && CheckpointController.instance.grappleUses < 5)
+            {
+                for (int i = 0; i < CheckpointController.instance.grappleUses; i++)
+                {
+                    grappleIcons[i].gameObject.SetActive(true);
+                }
+            }
+    
+            // Starts the timer with a length of time
+            timer = startTimerLength;
+            chainSlider.maxValue = chainTimerLength;
+        }
+    
+        // Update is called once per frame
+        void Update()
+        {
+            if (timerBreakTimer <= 0)
+            {
+                // Counts down the timer
+                timer -= Time.deltaTime;
+            }
+    
+            timerText.text = "Time left: " + timer.ToString("F2");
+            timerBreakTimer -= Time.deltaTime;
+    
+            if (Input.GetKeyDown(KeyCode.I))
+            {
+                grappleIcon.sprite = grappleActive;
+            }
+    
+            if (Input.GetKeyDown(KeyCode.K))
+            {
+                grappleIcon.sprite = grappleInactive;
+            }
+    
+            Countdown();
+    
+            // If the timer reaches 0, reload the scene
+            if (timer <= 0 && !hasLost)
+            {
+                audioManager.GetComponent<AudioManager>().PlaySFX(6);
+                hasLost = true;
+                GameManager.instance.PauseUnPauseGame();
+                loseText.gameObject.SetActive(true);
+            }
+        }
+    
+        public void Countdown()
+        {
+            if (timer < 5f)
+            {
+                timerAnim.SetBool("isRunningOutOfTime", true);
+            }
+            else
+            {
+                timerAnim.SetBool("isRunningOutOfTime", false);
+            }
+    
+            if (chainTimer <= 0)
+            {
+                if (currentChain > 0)
+                {
+                    audioManager.GetComponent<AudioManager>().PlaySFX(3);
+                }
+    
+                chainSlider.gameObject.SetActive(false);
+                currentChain = 0;
+                chainText.text = "Chain: " + currentChain;
+            }
+            else if (!hasLost)
+            {
+                chainTimer -= Time.deltaTime;
+                chainSlider.value = chainTimer;
+            }
+        }
+    
+        public void AddTime(float timeToAdd)
+        {
+            // Adds time to the timer
+            timer += timeToAdd;
+            timerText.text = "Time left: " + timer.ToString("F2");
+        }
+    
+        //Add one to the chain
+        public void AddChain()
+        {
+            chainSlider.gameObject.SetActive(true);
+            currentChain++;
+            chainText.text = "Chain: " + currentChain;
+    
+            if (chainTimerLength - (currentChain * reduceTimePerChain) < minimumChainTime)
+            {
+                chainTimer = minimumChainTime;
+                chainSlider.maxValue = minimumChainTime;
+            }
+            else
+            {
+                chainTimer = chainTimerLength - (currentChain * reduceTimePerChain);
+                chainText.text = "Chain: " + currentChain;
+                chainSlider.maxValue = chainTimerLength - (currentChain * reduceTimePerChain);
+            }
+        }
+        public void RestartGame()
+        {
+            GameManager.instance.ReloadScene();
+        }
+    
+        public void ExitToMenu()
+        {
+            GameManager.instance.ExitToMenu();
+        }
+    
+        public void TurnOffGrappleIcon(int position)
+        {
+            grappleIcons[position].GetComponent<Image>().sprite = grappleInactive;
+        }
+    
+        public void ReloadGrapples()
+        {
+            foreach (Image i in grappleIcons)
+            {
+                i.sprite = grappleActive;
+            }
+        }
+    
+        public void GrappleIconDenied()
+        {
+            foreach (Image i in grappleIcons)
+            {
+                i.GetComponent<Animator>().SetTrigger("pressedWhenInactive");
+            }
+        }
+    }</pre>
 									</div>
 									</li>
 									</ul>
@@ -483,185 +477,73 @@ public class RoomPrefab
                                         <li>
                                         <button class="button">See Game Manager Code</button>
                                         <div class="codecontent">
-    <pre>public class LevelGenerator : MonoBehaviour
-    {
-        public GameObject layoutRoom;
-        public Color startColour, endColour;
-    
-        public int distanceToEnd;
-    
-        public Transform generatorPoint;
-    
-        public enum Direction { up, right, down, left};
-        public Direction selectedDirection;
-    
-        public float xOffset = 18f, yOffset = 10f;
-    
-        public LayerMask whatisRoom;
-    
-        private GameObject endRoom;
-    
-        private List<GameObject> layoutRoomObjects = new List<GameObject>();
-    
-        public List<RoomPrefab> roomPrefabs = new List<RoomPrefab>();
-    
-        public RoomCenter centerStart, centerEnd;
-        public RoomCenter[] potentialCentersEasy;
-        public RoomCenter[] potentialCentersHard;
-    
-        private List<GameObject> generatedOutlines = new List<GameObject>();
-    
-        // Start is called before the first frame update
-        void Start()
-        {   //Create start room
-            Instantiate(layoutRoom, generatorPoint.position, generatorPoint.rotation).GetComponent<SpriteRenderer>().color = startColour;
-    
-            selectedDirection = (Direction)Random.Range(0, 4);
-            MoveGenerationPoint();
-    
-            //Create a room, choose where the next room will be and repeat
-            for (int i = 0; i < distanceToEnd; i++)
+    <pre>public class GameManager : MonoBehaviour
+        {
+            public static GameManager instance;
+            public bool isPaused;
+        
+            private void Awake()
             {
-                GameObject newRoom = Instantiate(layoutRoom, generatorPoint.position, generatorPoint.rotation);
-    
-                layoutRoomObjects.Add(newRoom);
-    
-                if (i + 1 == distanceToEnd)
-                {
-                    newRoom.GetComponent<SpriteRenderer>().color = endColour;
-                    layoutRoomObjects.RemoveAt(layoutRoomObjects.Count - 1);
-                    endRoom = newRoom;
-                }
-                selectedDirection = (Direction)Random.Range(0, 4);
-                MoveGenerationPoint();
-    
-                while (Physics2D.OverlapCircle(generatorPoint.position, .2f, whatisRoom))
-                {
-                    MoveGenerationPoint();
-                }
+                instance = this;
             }
-    
-            //create room outlines
-            CreateRoomOutline(Vector3.zero, 0);
-            foreach(GameObject room in layoutRoomObjects)
+        
+            // Start is called before the first frame update
+            void Start()
             {
-                int position = layoutRoomObjects.IndexOf(room);
-                CreateRoomOutline(room.transform.position, position);
+            
             }
-            CreateRoomOutline(endRoom.transform.position, distanceToEnd - 1);
-    
-            //Create the room centers that will go inside the room outlines
-            foreach(GameObject outline in generatedOutlines)
+        
+            // Update is called once per frame
+            void Update()
             {
-                bool generateCenter = true;
-    
-                //Create specific start room center
-                if (outline.transform.position == Vector3.zero)
+                if (Input.GetKeyDown(KeyCode.Escape))
                 {
-                    Instantiate(centerStart, outline.transform.position, transform.rotation).theRoom = outline.GetComponent<Room>();
-                    generateCenter = false;
-                }
-                //Create specific end room center
-                if (outline.transform.position == endRoom.transform.position)
-                {
-                    Instantiate(centerEnd, outline.transform.position, transform.rotation).theRoom = outline.GetComponent<Room>();
-                    generateCenter = false;
-                }
-                //Decide difficulty of room center based on how far to the end of the level it is
-                if (generateCenter)
-                {
-                    if (outline.GetComponent<Room>().roomNumber / distanceToEnd <= 0.25f)
+                    if (!UIController.instance.hasLost && !UIController.instance.hasWon)
                     {
-                        int centerSelect = Random.Range(0, potentialCentersEasy.Length);
-    
-                        Instantiate(potentialCentersEasy[centerSelect], outline.transform.position, transform.rotation).theRoom = outline.GetComponent<Room>();
+                        PauseUnPauseGame();
                     }
-                    else
-                    {
-                        int centerSelect = Random.Range(0, potentialCentersHard.Length);
-    
-                        Instantiate(potentialCentersHard[centerSelect], outline.transform.position, transform.rotation).theRoom = outline.GetComponent<Room>();
-                    }
-                    
                 }
             }
-        }
-    
-        // Update is called once per frame
-        void Update()
-        {
-    #if UNITY_EDITOR
-            if (Input.GetKey(KeyCode.R))
+        
+            public void ReloadScene()
             {
-                Scene scene = SceneManager.GetActiveScene(); SceneManager.LoadScene(scene.name);
+                Time.timeScale = 1f;
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
             }
-    
-    #endif
-        }
-    
-        //Choose where the rooms will spawn
-        public void MoveGenerationPoint()
-        {
-            switch (selectedDirection)
+        
+            public void PauseUnPauseGame()
             {
-                case Direction.up:
-                    generatorPoint.position += new Vector3(0f, yOffset, 0f);
-                    break;
-    
-                case Direction.right:
-                    generatorPoint.position += new Vector3(xOffset, 0f, 0f);
-                    break;
-    
-                case Direction.down:
-                    generatorPoint.position += new Vector3(0f, -yOffset, 0f);
-                    break;
-    
-                case Direction.left:
-                    generatorPoint.position += new Vector3(-xOffset, 0f, 0f);
-                    break;
-            }
-        }
-    
-        //Decide which Room outline will spawn so the rooms connect
-        private RoomPrefab PickRoom(bool exitUp, bool exitRight, bool exitDown, bool exitLeft)
-        {
-            foreach (RoomPrefab rp in roomPrefabs)
-            {
-                if (rp.exitUp == exitUp && rp.exitRight == exitRight && rp.exitDown == exitDown && rp.exitLeft == exitLeft)
+                if (isPaused)
                 {
-                    return rp;
+                    Time.timeScale = 1f;
+                    isPaused = false;
+        
+                    UIController.instance.pauseText.gameObject.SetActive(false);
+                    UIController.instance.restartGameButton.gameObject.SetActive(false);
+                    UIController.instance.exitToMenuButton.gameObject.SetActive(false);
+                }
+                else
+                {
+                    Time.timeScale = 0f;
+                    isPaused = true;
+        
+                    if (!UIController.instance.hasWon && !UIController.instance.hasLost)
+                    {
+                        UIController.instance.pauseText.gameObject.SetActive(true);
+                    }
+        
+                    UIController.instance.restartGameButton.gameObject.SetActive(true);
+                    UIController.instance.exitToMenuButton.gameObject.SetActive(true);
                 }
             }
-            return null;
-        }
-    
-        //Create the room outline
-        public void CreateRoomOutline(Vector3 position, int roomNumber)
-        {
-            bool exitUp = Physics2D.OverlapCircle(position + new Vector3(0, yOffset), .2f, whatisRoom);
-            bool exitDown = Physics2D.OverlapCircle(position + new Vector3(0, -yOffset), .2f, whatisRoom);
-            bool exitRight = Physics2D.OverlapCircle(position + new Vector3(xOffset, 0), .2f, whatisRoom);
-            bool exitLeft = Physics2D.OverlapCircle(position + new Vector3(-xOffset, 0), .2f, whatisRoom);
-    
-            var roomPrefab = PickRoom(exitUp, exitRight, exitDown, exitLeft);
-            if (roomPrefab != null)
+        
+            public void ExitToMenu()
             {
-                var room = Instantiate(roomPrefab.prefab, position, Quaternion.identity, transform);
-                room.GetComponent<Room>().roomNumber = roomNumber;
-                generatedOutlines.Add(room);
+                Time.timeScale = 1f;
+                SceneManager.LoadScene("Main Menu");
             }
         }
-    }
-    
-    [System.Serializable]
-    public class RoomPrefab
-    {
-        public bool exitUp;
-        public bool exitRight;
-        public bool exitDown;
-        public bool exitLeft;
-        public GameObject prefab;
-    } </pre>
+        </pre>
                                         </div>
                                         </li>
                                         </ul>
@@ -682,270 +564,12 @@ public class RoomPrefab
 							</header>
 							<div class="inner">
 
-								<video class="image left" controls src="images/Roguelike/Videos/Reincarnate.mp4"></video>
+								<image class="image left" src="images/GameJam/CheckpointControllerInspector.png"></image>
+                                <image class="image left" src="images/GameJam/UIControllerInspector.png"></image>
 
 								<h3 class="major">Making it easy for designers
 								</h3>
-								<p>The reincarnation mechanic is what the game is mostly revolves around: when the Player's health becomes 0, instead of a game over, you reincarnate and become stronger. In contrast, when the Player is fully healed they get weaker and can lead to a game over. This means the Player has to find ways of damaging themselves while the enemies attempt to heal them.</p>
-								<p>There are multiple objects the Player can find in the rooms to damage themselves, such as triggering arrows to fire from a statue, to coaxing enemies to fire at uneven structures and causing debris to fall from the ceiling.</p>
-
-								<ul class="actions">
-									<li>
-									<button class="button">See Checkpoint Controller Code</button>
-									<div class="codecontent">
-<pre>public class ReincarnationCard : MonoBehaviour
-{
-	public Animator anim;
-
-	public bool isLeft, isRight, isChosen, isCurseCard;
-
-	public RectTransform rectTransform;
-
-	public Text goodEffectText, badEffectText, titleText, cursedText, cursedTextTwo;
-
-	public int damageAmount, healthAmount, healthOnReincarnateAmount, damageTakenIncrease, healAmount, cardRarity;
-	public float fireRateIncrease;
-
-	public Sprite[] cardRarities, cardRaritiesHighlighted;
-	public Sprite cardRarityHighlighted;
-	public GameObject audioManager;
-
-	public enum cardType { damageGivenUpHealthUp, healthDownDamageGivenDown, damageTakenIncreaseHealthUp, fireRateUpDamageDown};
-	public enum curseCardType { takeExtraHeal};
-	public cardType selectedType;
-	public curseCardType selectedCurse;
-
-	// Start is called before the first frame update
-	void Start()
-	{
-		audioManager = GameObject.Find("Audio Manager");
-
-		if (!isCurseCard)
-		{
-			cursedText.gameObject.SetActive(false);
-			cursedTextTwo.gameObject.SetActive(false);
-			cardRarity = Random.Range(0, 4);
-		}
-		else
-		{
-			goodEffectText.gameObject.SetActive(false);
-			badEffectText.gameObject.SetActive(false);
-			cardRarity = 4;
-		}
-
-		cardRarityHighlighted = cardRaritiesHighlighted[cardRarity];
-
-		gameObject.GetComponent<Image>().sprite = cardRarities[cardRarity];
-
-		if (!isCurseCard)
-		{
-			selectedType = (cardType)Random.Range(0, 4);
-		}
-		else
-		{
-			selectedCurse = (curseCardType)(0);
-		}
-
-		//Set the card rarity
-		if (cardRarity == 0)
-		{
-			titleText.text = "Common";
-		}
-		if (cardRarity == 1)
-		{
-			titleText.text = "Rare";
-		}
-		if (cardRarity == 2)
-		{
-			titleText.text = "Epic";
-		}
-		if (cardRarity == 3)
-		{
-			titleText.text = "Legendary";
-		}
-		if (cardRarity == 4)
-		{
-			titleText.text = "Curse";
-		}
-
-		//Set the functionality and text for the various card effects
-		switch (selectedType)
-		{
-			case cardType.damageGivenUpHealthUp:
-				damageAmount = Random.Range(6, 9) + cardRarity;
-				healthAmount = Random.Range(6, 9) - cardRarity;
-				goodEffectText.text = "+" + damageAmount + " damage";
-				badEffectText.text = "+" + healthAmount + " max health";
-				break;
-
-			case cardType.healthDownDamageGivenDown:
-				damageAmount = Random.Range(8, 11) - cardRarity;
-				healthOnReincarnateAmount = Random.Range(8, 11) + cardRarity;
-				goodEffectText.text = "-" + healthOnReincarnateAmount + " health after reincarnate";
-				badEffectText.text = "-" + damageAmount + " damage";
-				break;
-
-			case cardType.damageTakenIncreaseHealthUp:
-				damageTakenIncrease = Random.Range(9, 12) + cardRarity;
-				healthAmount = Random.Range(7, 10) - cardRarity;
-				goodEffectText.text = "+" + damageTakenIncrease + " damage taken from objects";
-				badEffectText.text = "+" + healthAmount + " max health";
-				break;
-
-			case cardType.fireRateUpDamageDown:
-				fireRateIncrease = Random.Range(4, 5) * 0.1f + (cardRarity * 0.1f);
-				damageAmount = Random.Range(7, 10) - cardRarity;
-				goodEffectText.text = "+" + fireRateIncrease + " shots per second";
-				badEffectText.text = "-" + damageAmount + " damage";
-				break;
-		}
-
-		switch (selectedCurse)
-		{
-			case curseCardType.takeExtraHeal:
-				healAmount = 4;
-				cursedText.text = "+" + healAmount + " heal given by enemies";
-				cursedTextTwo.text = "Curse cards cannot be removed";
-				break;
-		}
-	}
-
-	// Update is called once per frame
-	void Update()
-	{
-		if (UIController.instance.isReincarnationCardClicked && !isChosen)
-		{
-			anim.SetBool("isDiscarded", true);
-		}
-	}
-
-	public void Hoverable()
-	{
-		anim.SetBool("isHoverable", true);
-	}
-
-	public void OnMouseHover()
-	{
-		if (anim.GetBool("isHoverable"))
-		{
-			anim.SetBool("isMouseHover", true);
-			//audioManager.GetComponent<AudioManager>().PlaySFX(2);
-		}
-	}
-
-	public void OffMouseHover()
-	{
-		if (anim.GetBool("isMouseHover"))
-		{
-			anim.SetBool("isMouseHover", false);
-		}
-	}
-
-	//When the Player chooses a card, apply the effects 
-	public void OnMouseClick()
-	{
-		if (anim.GetBool("isClickable") && anim != null)
-		{
-			audioManager.GetComponent<AudioManager>().PlaySFX(3);
-			UIController.instance.isReincarnationCardClicked = true;
-			isChosen = true;
-			anim.SetBool("isMouseClick", true);
-			anim.SetBool("isHoverable", false);
-
-			switch (selectedType)
-			{
-				case cardType.damageGivenUpHealthUp:
-					PlayerController.instance.IncreaseMaxHealth(healthAmount);
-					Gun.instance.IncreaseDamageToGive(damageAmount);
-					break;
-
-				case cardType.healthDownDamageGivenDown:
-					PlayerController.instance.DecreaseHealthOnReincarnation(healthOnReincarnateAmount);
-					Gun.instance.IncreaseDamageToGive(-damageAmount);
-					PlayerController.instance.IncreaseMaxHealth(0);
-					break;
-
-				case cardType.damageTakenIncreaseHealthUp:
-					PlayerController.instance.IncreaseDamageTaken(damageTakenIncrease);
-					PlayerController.instance.IncreaseMaxHealth(healthAmount);
-					break;
-
-				case cardType.fireRateUpDamageDown:
-					Gun.instance.IncreaseFireRate(fireRateIncrease);
-					Gun.instance.IncreaseDamageToGive(-damageAmount);
-					PlayerController.instance.IncreaseMaxHealth(0);
-					break;
-			}
-
-			switch (selectedCurse)
-			{
-				case curseCardType.takeExtraHeal:
-					PlayerController.instance.IncreaseHealToTake(healAmount);
-					PlayerController.instance.IncreaseMaxHealth(0);
-					break;
-			}
-
-			CardManager.instance.Equip(this);
-
-			anim.SetBool("isClickable", false); 
-
-			Debug.Log("Click!");
-		}
-	}
-
-	//Reverse the card effects if destroyed
-	public void OnRemove()
-	{
-		audioManager.GetComponent<AudioManager>().LoudenMusic();
-
-		//Remove the stats and set current health to OnReinarncateHealth and Unpause the game
-		switch (selectedType)
-		{
-			case cardType.damageGivenUpHealthUp:
-				PlayerController.instance.IncreaseMaxHealth(-healthAmount);
-				Gun.instance.IncreaseDamageToGive(-damageAmount);
-				break;
-
-			case cardType.healthDownDamageGivenDown:
-				PlayerController.instance.DecreaseHealthOnReincarnation(-healthOnReincarnateAmount);
-				Gun.instance.IncreaseDamageToGive(damageAmount);
-				PlayerController.instance.IncreaseMaxHealth(0);
-				break;
-
-			case cardType.damageTakenIncreaseHealthUp:
-				PlayerController.instance.IncreaseDamageTaken(-damageTakenIncrease);
-				PlayerController.instance.IncreaseMaxHealth(-healthAmount);
-				break;
-
-			case cardType.fireRateUpDamageDown:
-				Gun.instance.IncreaseFireRate(-fireRateIncrease);
-				Gun.instance.IncreaseDamageToGive(damageAmount);
-				PlayerController.instance.IncreaseMaxHealth(0);
-				break;
-		}
-
-		switch (selectedCurse)
-		{
-			case curseCardType.takeExtraHeal:
-				PlayerController.instance.IncreaseHealToTake(-healAmount);
-				PlayerController.instance.IncreaseMaxHealth(0);
-				break;
-		}
-
-		PlayerController.instance.currentHealth = PlayerController.instance.onReincarnateHealth;
-		GameManager.instance.UnpauseGame();
-		PlayerController.instance.isDeincarnated = false;
-		PlayerController.instance.ActivateInvincibility(2f);
-	}
-
-	public void PlaySound()
-	{
-		audioManager.GetComponent<AudioManager>().PlaySFX(2);
-	}
-}</pre>
-									</div>
-									</li>
-									</ul>
+								<p>The time constraint in the project made it all the more important for me to design the code so that the level designers had all the variables they needed to set through the inspector. This was handled using the UIController and CheckpointController. Variables setting things such as how many grapples can be used, to how much time is added when the Player collides with a Checkpoint, to checking a box to set the infinite mode, made it easy for the level designers to tweak difficulty and craft levels that felt different from each other. It saved time and allowed us to finish the project just on time.</p>
 
 								<ul class="actions">
 									<li><a href="#Top" class="button primary">Jump to top</a></li>
