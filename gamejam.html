@@ -44,7 +44,7 @@
 						<header id="Top">
 							<div class="inner">
 								<h2 class="align-center">Climax Game Jam 2022 (Unity C#)</h2>
-								<p class="align-center">For the climax studios game jam we created an arcadey first person parkour game in 48 hours. To be clear, I did not create the player movement and grapple hook functionality. My role was creating the checkpoint system, impleneting the UI and audio, and creating an easy system for the designers to create new levels by putting every variable in the inspector.</p>
+								<p class="align-center">For the Climax Studios game jam we created an arcadey first person parkour game in 48 hours. To be clear, I did not create the player movement and grapple hook functionality. My role was creating the checkpoint system, impleneting the UI and audio, and creating an easy system for the designers to create new levels by putting every variable in the inspector.</p>
 								<ul class="actions special">
 									<li>
 										<a href="#Checkpoint" class="button primary">Checkpoint system</a>
@@ -74,7 +74,7 @@
 								</div>
 							</header>
 							<div class="inner">
-								<video class="image left" controls src="images/gamejam/Checkpoints.mp4"></video>			
+								<video class="image left" controls src="images/GameJam/Checkpoints.m4v"></video>			
 								<h3 class="major">Checkpoints</h3>
 								<p>The Checkpoints are the main gameplay element for our game. When the Player runs into a checkpoint, it adds more time to the timer, and counts towards the total checkpoints required to complete the level. If the timer runs out, it results in a game over and the level must be attempted again. </p>
 								<p>The CheckpointController script, attached to the object of the same name, contains all the checkpoint related variables, such as the list of active checkpoints and how many should be active at once. The ChangeCheckpoints function is called when the Player collides with a checkpoint, and puts that checkpoint into a seperate "discarded" list so it can't be used again.</p>
