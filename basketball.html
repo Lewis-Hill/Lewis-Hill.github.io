@@ -88,278 +88,270 @@
 									<button class="button">See Player Controller Code</button>
 									<div class="codecontent">
 											
-	<pre>class PlayerController : MonoBehaviour
-{
-	public static PlayerController instance;
-
-	public Rigidbody2D theRb;
-
-	public SpriteRenderer playerSR, bodySR, body2SR;
-
-	public Sprite player, playerHealed, body, bodyHealed, playerDamaged, bodyDamaged;
-
-	public float moveSpeed, activeMoveSpeed;
-
-	public Transform gunHand;
-
-	private Vector2 moveInput;
-
-	public Animator anim;
-
-	public float maxHealth, currentHealth, onReincarnateHealth;
-	private float reincarnateHealthToTakeAway = 30f;
-
-	public GameObject rock, firePoint, zEffect;
-
-	public bool isDeincarnated = false;
-
-	public bool canMove = true;
-
-	public float InvincibilityTimer, timeOfInvincibility;
-
-	public bool isInvincible = false;
-
-	public float dashSpeed, dashCooldown, dashInvincibilityTime, dashLength;
-
-	private float damageLength = 0.1f;
-	public int extraHealToTake = 0;
-
-	[Header("Card Effects")]
-	public bool isDoubleHeal;
-
-	[HideInInspector]
-	public int damageTakenIncrease = 0;
-
-	private float dashTimer, dashCooldownTimer, damageTimer;
-
-	public GameObject audioManager;
-
-	private void Awake()
+<pre>bool UGrabber::GetGrabbableInReach(FHitResult& OutHitResult) const
 	{
-		instance = this;
+		FVector Start = GetComponentLocation();
+		FVector End = Start + GetForwardVector() * MaxGrabDistance;
+		DrawDebugLine(GetWorld(), Start, End, FColor::Orange);
+	
+		FCollisionShape Sphere = FCollisionShape::MakeSphere(GrabRadius);
+		return GetWorld()->SweepSingleByChannel(
+			OutHitResult,
+			Start, End,
+			FQuat::Identity,
+			ECC_GameTraceChannel2,
+			Sphere
+		);
 	}
-	// Start is called before the first frame update
-	void Start()
+	
+	void UGrabber::Grab()
 	{
-		audioManager = GameObject.Find("Audio Manager");
-		activeMoveSpeed = moveSpeed;
-
-		//Start the game with the health given after reincarnating
-		onReincarnateHealth = maxHealth - reincarnateHealthToTakeAway;
-		currentHealth = onReincarnateHealth;
-	}
-
-	// Update is called once per frame
-	void Update()
-	{
-		//Handle movement
-		if (!GameManager.instance.isPausedReincarnate && !GameManager.instance.isPausedMenu)
+		//Only attempt to grab if we have a physics component, or if the turn is still on-going
+		if (GetPhysicsHandleComponent() == nullptr || GameMode->IsTurnOver)
 		{
-			if (damageTimer > 0)
+			return;
+		}
+	
+		//Test to see if any grabbable objects are within range
+		FHitResult HitResult;
+		bool HasHit = GetGrabbableInReach(HitResult);
+	
+		if (HasHit && GameMode)
+		{
+			//Reset projectile spawn points ready to use again
+			if (Spawner)
 			{
-				damageTimer -= Time.deltaTime;
+				Spawner->SetVisibility(true, 0, Spawner->SpawnedObjects.Num());
+				Spawner->ResetLocation();
+			}
+	
+			UPrimitiveComponent* HitComponent = HitResult.GetComponent();
+			AActor* HitActor = HitResult.GetActor();
+	
+			if (Cast<ABasketball>(HitActor))
+			{
+				if (GameMode->IsPlacingPhase)
+				{
+					return;
+				}
+	
+				GameMode->SetGrabbedBallUI(true, true);
+				PlayerCharacter->IsHoldingBall = true;
+			}
+	
+			ToyboxObject = Cast<AToyboxObject>(HitActor);
+	
+			if (ToyboxObject)
+			{
+				ToyboxObject->SecondMesh->AttachToComponent(ToyboxObject->Mesh, FAttachmentTransformRules::KeepWorldTransform);
+				
+				if (!GetMatchingToyboxObject(HitComponent))
+				{
+					return;
+				}
+			}
+	
+			FRotator TargetRotation = FRotator(ToyBoxRotationX, GetComponentRotation().Yaw, ToyBoxRotationZ);
+	
+			//If we've grabbed a toybox spawner, spawn a toybox object and grab that object
+			if (AToyboxSpawner* ToyboxSpawner = Cast<AToyboxSpawner>(HitActor))
+			{
+				if (GameMode->ToyboxObjectsLeftToSpawn == 0)
+				{
+					return;
+				}
+	
+				//Make sure the toybox spawner outline is deactivated 
+				if (CurrentOutlinedComponent)
+				{
+					CurrentOutlinedComponent->SetRenderCustomDepth(false);
+					CurrentOutlinedComponent = nullptr;
+					GameMode->GrabbableObjectInView(false);
+				}
+	
+				ToyboxObject = ToyboxSpawner->SpawnToyboxObject();
+	
+				if (ToyboxObject)
+				{
+					//Stop spinning toybox objects spinning while holding
+					if (ToyboxObject->ShouldSpin)
+					{
+						ToyboxObject->IsSpinning = false;
+					}
+	
+					ToyBoxObjectMesh = ToyboxObject->Mesh;
+	
+					SetGrabbedComponent(ToyBoxObjectMesh, HitResult.GetActor()->GetActorLocation(), TargetRotation);
+	
+					if (GameMode)
+					{
+						GameMode->PlacedToyboxObjects.Add(ToyboxObject);
+						GameMode->ToyboxObjectsLeftToSpawn--;
+						GameMode->UpdatePlacingPhaseText(ToyboxObject, true);
+					}
+	
+					//Save the profile of the toybox object and set all channels to overlap
+					ChangeToyboxMeshCollision(true);
+				}
+					
+				return;
+			}
+	
+			SetGrabbedComponent(HitComponent, HitResult.GetActor()->GetActorLocation(), TargetRotation);
+	
+			if (Cast<ABasketball>(GrabbedComponent->GetOwner()))
+			{
+				GetOwner()->Tags.Add("HoldingBall");
+			}
+	
+			//Turn off object outline if there are any activated
+			if (CurrentOutlinedComponent)
+			{
+				CurrentOutlinedComponent->SetRenderCustomDepth(false);
+				CurrentOutlinedComponent = nullptr;
+				GameMode->GrabbableObjectInView(false);
+			}
+	
+			if (ToyboxObject)
+			{
+				//Stop spinning toybox objects spinning while holding
+				if (ToyboxObject->ShouldSpin)
+				{
+					ToyboxObject->IsSpinning = false;
+				}
+	
+				ToyBoxObjectMesh = ToyboxObject->Mesh;
+				ChangeToyboxMeshCollision(true);
+	
+				if (GameMode)
+				{
+					GameMode->UpdatePlacingPhaseText(ToyboxObject, true);
+				}
 			}
 			else
 			{
-				playerSR.sprite = player;
-				bodySR.sprite = body;
-				body2SR.sprite = body;
+				ToyBoxObjectMesh = nullptr;
+				ToyboxObject = nullptr;
 			}
-
-			if (canMove)
+		}
+	}
+	
+	void UGrabber::Release()
+	{
+		//If an object is being grabbed
+		if (GetPhysicsHandleComponent() && GrabbedComponent)
+		{	
+			if (Cast<ABasketball>(GrabbedComponent->GetOwner()))
 			{
+				GameMode->SetGrabbedBallUI(false, true);
+				PlayerCharacter->IsHoldingBall = false;
+			}
+	
+			//If the grabbed object is a ToyBox object
+			if (GrabbedComponent->GetOwner()->ActorHasTag("Toybox") && ToyBoxObjectMesh)
+			{
+				if (ToyboxObject->CurrentOverlappingActors > 0)
 				{
-					if (isInvincible)
-					{
-						playerSR.color = new Color(1.0f, 1.0f, 1.0f, 0.5f);
-						if (InvincibilityTimer > 0)
-						{
-							InvincibilityTimer -= Time.deltaTime;
-						}
-						else
-						{
-							isInvincible = false;
-							playerSR.color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
-						}
-					}
-
-					moveInput.x = Input.GetAxisRaw("Horizontal");
-					moveInput.y = Input.GetAxisRaw("Vertical");
-
-					moveInput.Normalize();
-
-					theRb.velocity = moveInput * activeMoveSpeed;
-
-					Vector3 mousePos = Input.mousePosition;
-					Vector3 screenPoint = CameraController.instance.mainCamera.WorldToScreenPoint(transform.localPosition);
-
-					if (mousePos.x < screenPoint.x)
-					{
-						transform.localScale = new Vector3(-1f, 1f, 1f);
-						gunHand.localScale = new Vector3(-1.5f, -1.5f, 1f);
-					}
-					else
-					{
-						transform.localScale = new Vector3(1f, 1f, 1f);
-						gunHand.localScale = new Vector3(1.5f, 1.5f, 1f);
-					}
-
-					Vector2 offset = new Vector2(mousePos.x - screenPoint.x, mousePos.y - screenPoint.y);
-					float angle = Mathf.Atan2(offset.y, offset.x) * Mathf.Rad2Deg;
-
-					gunHand.rotation = Quaternion.Euler(0, 0, angle);
-
-					if (moveInput != Vector2.zero)
-					{
-						anim.SetBool("isMoving", true);
-					}
-					else
-					{
-						anim.SetBool("isMoving", false);
-					}
-
-					if (Input.GetKeyDown(KeyCode.Space) && dashTimer <= 0 && dashCooldownTimer <= 0)
-					{
-						audioManager.GetComponent<AudioManager>().PlaySFX(6);
-						activeMoveSpeed = dashSpeed;
-						ActivateInvincibility(dashInvincibilityTime);
-						dashTimer = dashLength;
-						anim.SetTrigger("Dash");
-					}
-
-					if (dashTimer > 0)
-					{
-						dashTimer -= Time.deltaTime;
-						if (dashTimer <= 0)
-						{
-							activeMoveSpeed = moveSpeed;
-							dashCooldownTimer = dashCooldown;
-						}
-					}
-
-					if (dashCooldownTimer > 0)
-					{
-						dashCooldownTimer -= Time.deltaTime;
-					}
+					return;
 				}
-			}
-
-			else
-			{
-				theRb.velocity = Vector3.zero;
-				anim.SetBool("isMoving", false);
-				activeMoveSpeed = moveSpeed;
-				dashCooldownTimer = 0;
-				dashTimer = 0;
-
-				if (isInvincible)
+	
+				//Let spinning objects spin again on release
+				if (ToyboxObject->ShouldSpin)
 				{
-					isInvincible = false;
-					playerSR.color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
-					InvincibilityTimer = 0;
+					ToyboxObject->IsSpinning = true;
 				}
-			}
-		}
-
-		//If player is healed, Deincarnate 
-		if (currentHealth >= maxHealth && !isDeincarnated)
-		{
-			currentHealth = maxHealth;
-			isDeincarnated = true;
-
-			GameManager.instance.PauseGame();
-			CardManager.instance.Unequip();
-			//GameManager.instance.UnpauseGame();
-			//ActivateInvincibility(2f);
-		}
-	}
-
-	//This function covers being damaged by items and healed by enemies
-	public void TakeDamage(int damageToTake)
-	{
-		if (!isInvincible || damageToTake > 0)
-		{
-			if (damageToTake > currentHealth)
-			{
-				currentHealth = 0;
-			}
-			else
-			{
-				if (isDoubleHeal && damageToTake < 0)
+	
+				if (GameMode)
 				{
-					currentHealth -= damageToTake * 2;
+					GameMode->UpdatePlacingPhaseText(ToyboxObject, false);
 				}
-				else
-				{
-					currentHealth -= damageToTake;
-				}
+	
+				ChangeToyboxMeshCollision(false);
 			}
-		}
-	}
-
-	//One of the card abilities
-	public void IncreaseMaxHealth(int healthToIncrease)
-	{
-		maxHealth += healthToIncrease;
-		onReincarnateHealth = maxHealth - reincarnateHealthToTakeAway;
-		currentHealth = onReincarnateHealth;
-	}
-
-	//This is called when the Player rolls
-	public void ActivateInvincibility(float timeOfInvincibility)
-	{
-		isInvincible = true;
-		InvincibilityTimer = timeOfInvincibility;
-	}
-
-	//Trigger the visual effect for when the Player is damaged or healed
-	public void DamagedByEnemy(bool isEnemy)
-	{
-		if (isEnemy)
-		{
-			if (!isInvincible)
+	
+			if (Cast<ABasketball>(GrabbedComponent->GetOwner()))
 			{
-				damageTimer = damageLength;
-				damageTimer = damageLength;
-				playerSR.sprite = playerHealed;
-				bodySR.sprite = bodyHealed;
-				body2SR.sprite = bodyHealed;
+				GetOwner()->Tags.Remove("HoldingBall");
+			}
+	
+			HoldDistance = 50.f;
+			GrabbedComponent->WakeAllRigidBodies();
+			GrabbedComponent->GetOwner()->Tags.Remove("Grabbed");
+			GrabbedComponent = nullptr;
+			GetPhysicsHandleComponent()->ReleaseComponent();
+	
+			if (ToyboxObject)
+			{
+				ToyboxObject->SecondMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+			}
+	
+			if (Spawner)
+			{
+				Spawner->SetVisibility(false, 0, Spawner->SpawnedObjects.Num());
 			}
 		}
-
-		if (!isEnemy)
+	}
+	
+	void UGrabber::Throw(bool IsRandomThrow)
+	{
+		if (GrabbedComponent == nullptr)
 		{
-			damageTimer = damageLength;
-			playerSR.sprite = playerDamaged;
-			bodySR.sprite = bodyDamaged;
-			body2SR.sprite = bodyDamaged;
+			return;
 		}
+	
+		if (GameMode)
+		{
+			GameMode->ThrowLocation = GetOwner()->GetActorLocation();
+		}
+	
+		if (IsRandomThrow)
+		{
+			GrabbedComponent->
+				AddImpulse(FVector(GetForwardVector().X + FMath::RandRange(-1.f, 1.f),
+					GetForwardVector().Y + FMath::RandRange(-1.f, 1.f),
+					GetForwardVector().Z + FMath::RandRange(-1.f, 1.f))
+					* CurrentThrowPower, NAME_None, false);
+		}
+		else
+		{
+			GrabbedComponent->SetPhysicsLinearVelocity(FVector(0, 0, 0));
+			GrabbedComponent->AddImpulse(GetForwardVector() * CurrentThrowPower, NAME_None, false);
+		}
+	
+		FVector Velocity = GetForwardVector() * CurrentThrowPower;
+	
+		if (PlayerCharacter->GetCharacterMovement()->IsFalling())
+		{
+			if (PlayerActionsLeft > 0)
+			{
+				GameMode->ActionPerformed(PlayerActionName);
+				PlayerActionsLeft--;
+			}
+		}
+	
+		Release();
 	}
-
-	//One of the card abilities
-	public void IncreaseDamageTaken(int damageIncrease)
+	
+	void UGrabber::SetGrabbedComponent(UPrimitiveComponent* ComponentToSet, FVector Location, FRotator Rotation)
 	{
-		damageTakenIncrease += damageIncrease;
-	}
-
-	//This occurs when a Hammer enemy knocks the Player out
-	public void KnockOut()
-	{
-		Instantiate(zEffect, new Vector3(transform.position.x, transform.position.y + 0.5f), transform.rotation, gameObject.transform);
-	}
-
-	//One of the card abilities
-	public void DecreaseHealthOnReincarnation(int healthAmount)
-	{
-		reincarnateHealthToTakeAway += healthAmount;
-	}
-
-	//One of the card abilities
-	public void IncreaseHealToTake(int heal)
-	{
-		extraHealToTake += heal;
-	}
-}</pre>
+		if (ToyboxObject)
+		{
+			ComponentToSet->SetSimulatePhysics(true);
+		}
+	
+		UE_LOG(LogTemp, Display, TEXT("%s : turned on physics sim"), *ComponentToSet->GetName());
+		ComponentToSet->WakeAllRigidBodies();
+		ComponentToSet->GetOwner()->Tags.Add("Grabbed");
+	
+		GetPhysicsHandleComponent()->GrabComponentAtLocationWithRotation(
+			ComponentToSet,
+			NAME_None,
+			Location,
+			Rotation
+		);
+	
+		GrabbedComponent = GetPhysicsHandleComponent()->GetGrabbedComponent();
+	}</pre>
 									</div>
 									</li>
 									</ul>
