@@ -79,13 +79,14 @@
 							</header>
 							<div class="inner">
 								<video class="image left" controls src="images/Basketball/grabbing.mp4"></video>			
-								<h3 class="major">Grabbing and Throwing</h3>
+								<h3 class="major">Ball Control</h3>
 								<p>By adding a PhysicsHandle Component on the Player and creating a cusotm "Grabber" class, I was able to add the functionality of picking up and throwing the ball. The Grabber checks against a custom trace channel to see if any valid objects are within grabbing distance. The PhysicsHandle deals with grabbing the object. In Tick, the location of the grabbed object is updated.</p>
 								<p>When the ball is thrown, it is released from the PhysicsHandle and an impulse is added to it. By holding down the Throw button before releasing, more power is added to the impulse. I added a shake to the ball using a Vector Timeline to add small offsets to the ball while the throw is charging up.</p>
+								<p>The springy feel of the ball while it's grabbed is achieved by altering some of the values found on the PhysicsHandle.</p>
 
 								<ul class="actions">
 									<li>
-									<button class="button">See Player Controller Code</button>
+									<button class="button">See Grabber Code</button>
 									<div class="codecontent">
 											
 <pre>bool UGrabber::GetGrabbableInReach(FHitResult& OutHitResult) const
@@ -368,15 +369,16 @@
 							<header id="Procedural">
 								<br>
 								<div class="inner">
-									<h2><u>Procedural Level Generation</u></h2>
+									<h2><u>Predicting Ball Trajectory</u></h2>
 								</div>
 							</header>
 							<div class="inner">
-								<video class="image left" controls src="images/Roguelike/Videos/Level generation.mp4"></video>
+								<video class="image left" controls src="images/Basketball/projectilepath.mp4"></video>
 
-								<h3 class="major">Different rooms every time</h3>
-								<p>The rooms are made up out of 2 pre-made parts, the outline and the center. The outline contains the exits, and is generated to connect each room together, while the center contains the enemies, objects and floor tiles.</p>
-								<p>There are lists for varieties of both: the outlines list containing every combination of exits possible, and the centers lists containing pre-placed elements to make for purposeful gameplay encounters. The centers lists are split up into easy and hard levels. Building the varieties of outlines and centers was easy as I created a tileset.</p>
+								<h3 class="major">Setting up the Preview Path</h3>
+								<p>Unreal Engine has a built in function called PredictProjectilePath. It takes in a velocity and location, aswell as other Parameters such as whether it should consider collisions with a certain trace channel, to create a path of debug spheres of where the ball will go.</p>
+								<p>Executing this function only creates one path, so to allow for multiple bounces, I call the function again and decrement the "MaxBounces" int variable so I can restrict the amount of times it is called. This time I plug in the mirrored velocity of the ball at the point of impact, aswell as the impact location.</p>
+								<p>The Preview Path also works with the bounce pad and cannon objects I have in the game. If the path collides with a bounce pad for example, it will show the bounce path the ball will make. For a cannon, the path will shoot out of where the cannon faces, so everything is reasonably accurate.</p>
 
 								<h3 class="major">Procedural level layout</h3>
 								<p>The "Generation Point" object starts at 0,0 and an rectangle icon is created for the start room. The Point then translates randomly in one of 4 directions, creates an icon, and repeats until the specified number of icons have been created. This is to prepare for creating the room outlines, and these icons are also used to visualise the mini-map. If the Point happens to overlap an existing room, it chooses a direction and translates in that direction until an empty space is found.</p>
