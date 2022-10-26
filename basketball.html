@@ -376,14 +376,14 @@
 								<video class="image left" controls src="images/Basketball/projectilepath.mp4"></video>
 
 								<h3 class="major">Setting up the Preview Path</h3>
-								<p>Unreal Engine has a built in function called PredictProjectilePath. It takes in a velocity and location, aswell as other Parameters such as whether it should consider collisions with a certain trace channel, to create a path of debug spheres of where the ball will go.</p>
+								<p>To make shots easier for Players I wanted them to see the trajectory of their throw. Unreal Engine has a built in function called PredictProjectilePath. It takes in a velocity and location, aswell as other Parameters such as whether it should consider collisions with a certain trace channel, to create a path of debug spheres of where the ball will go.</p>
 								<p>Executing this function only creates one path, so to allow for multiple bounces, I call the function again and decrement the "MaxBounces" int variable so I can restrict the amount of times it is called. This time I plug in the mirrored velocity of the ball at the point of impact, aswell as the impact location.</p>
 								<p>The Preview Path also works with the bounce pad and cannon objects I have in the game. If the path collides with a bounce pad for example, it will show the bounce path the ball will make. For a cannon, the path will shoot out of where the cannon faces, so everything is reasonably accurate.</p>
 
-								<h3 class="major">Procedural level layout</h3>
-								<p>The "Generation Point" object starts at 0,0 and an rectangle icon is created for the start room. The Point then translates randomly in one of 4 directions, creates an icon, and repeats until the specified number of icons have been created. This is to prepare for creating the room outlines, and these icons are also used to visualise the mini-map. If the Point happens to overlap an existing room, it chooses a direction and translates in that direction until an empty space is found.</p>
-								<p>To create the room outlines, for every room, an overlap circle checks in each direction to see which rooms are surrounding it, and chooses from the list of pre-made room outlines to perfectly connect each room with exits.</p>
-								<p>The room centers are then created from a list of easy and hard room centers, which are placed so that the levels are harder closer towards the end of the level. The start and end room centers are pre-determined. These steps ensure that there is a high chance that no two rooms will be the same, and that the layout of rooms will be unique to every run.</p>
+								<h3 class="major">Creating the visual for the Path Points</h3>
+								<p>As mentioned, the PredictProjectilePath function creates debug spheres to show the ball trajectory. As these won't show up on a packaged build I had to replace these spheres with my own object. I created an array of spheres that get spawned at the start of the game, and when the projectile path changes, I set the location of as many points are needed to the path.</p>
+								<p>To make the collisions in the path clear for the Player, I change the material of the points that come before a collision to yellow. Increasing the throw power also correctly updates the path with the added distance.</p>
+								<p>Because the points work with the bounce pads and cannons in the level, you can create quite mesmerising paths, especially when combined with spinning cannons that update the path as they spin around. </p>
 
 								<ul class="actions">
 									<li>
