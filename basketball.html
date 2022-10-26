@@ -54,7 +54,7 @@
 										<a href="#Procedural" class="button primary">Predicting Ball Trajectory</a>
 									</li>
 									<li>
-										<a href="#Reincarnation" class="button primary">Manipulating the Ball</a>
+										<a href="#Reincarnation" class="button primary">ToyBox Objects and Tricks</a>
 									</li>
 									<li>
 										<a href="#Enemies" class="button primary">"Local Multiplayer"</a>
@@ -387,187 +387,122 @@
 
 								<ul class="actions">
 									<li>
-									<button class="button">See Level Generation Code</button>
+									<button class="button">See Projectile Path Code</button>
 									<div class="codecontent">
-<pre>public class LevelGenerator : MonoBehaviour
-{
-	public GameObject layoutRoom;
-	public Color startColour, endColour;
-
-	public int distanceToEnd;
-
-	public Transform generatorPoint;
-
-	public enum Direction { up, right, down, left};
-	public Direction selectedDirection;
-
-	public float xOffset = 18f, yOffset = 10f;
-
-	public LayerMask whatisRoom;
-
-	private GameObject endRoom;
-
-	private List<GameObject> layoutRoomObjects = new List<GameObject>();
-
-	public List<RoomPrefab> roomPrefabs = new List<RoomPrefab>();
-
-	public RoomCenter centerStart, centerEnd;
-	public RoomCenter[] potentialCentersEasy;
-	public RoomCenter[] potentialCentersHard;
-
-	private List<GameObject> generatedOutlines = new List<GameObject>();
-
-	// Start is called before the first frame update
-	void Start()
-	{   //Create start room
-		Instantiate(layoutRoom, generatorPoint.position, generatorPoint.rotation).GetComponent<SpriteRenderer>().color = startColour;
-
-		selectedDirection = (Direction)Random.Range(0, 4);
-		MoveGenerationPoint();
-
-		//Create a room, choose where the next room will be and repeat
-		for (int i = 0; i < distanceToEnd; i++)
+<pre>void UGrabber::CreateProjectilePreview(float BouncesLeft, FVector Location, FVector Velocity, bool HideFirstPoint)
+	{
+		FPredictProjectilePathParams ProjectileParams = FPredictProjectilePathParams(10,
+			Location,
+			Velocity,
+			3);
+	
+		ProjectileParams.SimFrequency = 15;
+		ProjectileParams.bTraceWithChannel = true;
+		ProjectileParams.TraceChannel = ECC_GameTraceChannel3;
+	
+		if (BouncesLeft == 0)
 		{
-			GameObject newRoom = Instantiate(layoutRoom, generatorPoint.position, generatorPoint.rotation);
-
-			layoutRoomObjects.Add(newRoom);
-
-			if (i + 1 == distanceToEnd)
-			{
-				newRoom.GetComponent<SpriteRenderer>().color = endColour;
-				layoutRoomObjects.RemoveAt(layoutRoomObjects.Count - 1);
-				endRoom = newRoom;
-			}
-			selectedDirection = (Direction)Random.Range(0, 4);
-			MoveGenerationPoint();
-
-			while (Physics2D.OverlapCircle(generatorPoint.position, .2f, whatisRoom))
-			{
-				MoveGenerationPoint();
-			}
+			ProjectileParams.bTraceWithCollision = false;
 		}
-
-		//create room outlines
-		CreateRoomOutline(Vector3.zero, 0);
-		foreach(GameObject room in layoutRoomObjects)
+		else
 		{
-			int position = layoutRoomObjects.IndexOf(room);
-			CreateRoomOutline(room.transform.position, position);
+			ProjectileParams.bTraceWithCollision = true;
 		}
-		CreateRoomOutline(endRoom.transform.position, distanceToEnd - 1);
-
-		//Create the room centers that will go inside the room outlines
-		foreach(GameObject outline in generatedOutlines)
+	
+		ProjectileParams.ActorsToIgnore = IgnoreActorArray;
+	
+		FPredictProjectilePathResult ProjectilePathResult;
+	
+		bool HasHit = UGameplayStatics::PredictProjectilePath(this, ProjectileParams, ProjectilePathResult);
+	
+		int i;
+	
+		if (HideFirstPoint)
 		{
-			bool generateCenter = true;
-
-			//Create specific start room center
-			if (outline.transform.position == Vector3.zero)
+			i = 1;
+		}
+		else
+		{
+			i = 0;
+		}
+	
+		for (i; i < ProjectilePathResult.PathData.Num(); i++)
+		{
+			//Aslong as there is a Point that can be moved
+			if (Spawner && Spawner->SpawnedObjects.Num() - 1 > ProjectilePointsActive)
 			{
-				Instantiate(centerStart, outline.transform.position, transform.rotation).theRoom = outline.GetComponent<Room>();
-				generateCenter = false;
-			}
-			//Create specific end room center
-			if (outline.transform.position == endRoom.transform.position)
-			{
-				Instantiate(centerEnd, outline.transform.position, transform.rotation).theRoom = outline.GetComponent<Room>();
-				generateCenter = false;
-			}
-			//Decide difficulty of room center based on how far to the end of the level it is
-			if (generateCenter)
-			{
-				if (outline.GetComponent<Room>().roomNumber / distanceToEnd <= 0.25f)
+				//Once the Points start clipping past the floor, stop this function
+				if (ProjectilePathResult.PathData[i].Location.Z < -10)
 				{
-					int centerSelect = Random.Range(0, potentialCentersEasy.Length);
-
-					Instantiate(potentialCentersEasy[centerSelect], outline.transform.position, transform.rotation).theRoom = outline.GetComponent<Room>();
+					return;
+				}
+	
+				//Move the projectile point
+				auto &Object = Spawner->SpawnedObjects[ProjectilePointsActive];
+				Object->SetActorLocation(ProjectilePathResult.PathData[i].Location);
+	
+				UStaticMeshComponent* Mesh = Object->FindComponentByClass<UStaticMeshComponent>();
+	
+				if (HasHit && i == ProjectilePathResult.PathData.Num() - 1)
+				{
+					if (Mesh)
+					{
+						Mesh->SetMaterial(0, Object->HitMaterial);
+					}
 				}
 				else
 				{
-					int centerSelect = Random.Range(0, potentialCentersHard.Length);
-
-					Instantiate(potentialCentersHard[centerSelect], outline.transform.position, transform.rotation).theRoom = outline.GetComponent<Room>();
+					if (Mesh)
+					{
+						Mesh->SetMaterial(0, Object->NormalMaterial);
+					}	
 				}
 				
+				ProjectilePointsActive++;
 			}
-		}
-	}
-
-	// Update is called once per frame
-	void Update()
-	{
-#if UNITY_EDITOR
-		if (Input.GetKey(KeyCode.R))
-		{
-			Scene scene = SceneManager.GetActiveScene(); SceneManager.LoadScene(scene.name);
-		}
-
-#endif
-	}
-
-	//Choose where the rooms will spawn
-	public void MoveGenerationPoint()
-	{
-		switch (selectedDirection)
-		{
-			case Direction.up:
-				generatorPoint.position += new Vector3(0f, yOffset, 0f);
-				break;
-
-			case Direction.right:
-				generatorPoint.position += new Vector3(xOffset, 0f, 0f);
-				break;
-
-			case Direction.down:
-				generatorPoint.position += new Vector3(0f, -yOffset, 0f);
-				break;
-
-			case Direction.left:
-				generatorPoint.position += new Vector3(-xOffset, 0f, 0f);
-				break;
-		}
-	}
-
-	//Decide which Room outline will spawn so the rooms connect
-	private RoomPrefab PickRoom(bool exitUp, bool exitRight, bool exitDown, bool exitLeft)
-	{
-		foreach (RoomPrefab rp in roomPrefabs)
-		{
-			if (rp.exitUp == exitUp && rp.exitRight == exitRight && rp.exitDown == exitDown && rp.exitLeft == exitLeft)
+			else
 			{
-				return rp;
+				return;
+			}
+	
+			Spawner->SetVisibility(true, 0, ProjectilePointsActive + 1);
+		}
+	
+		if (HasHit && BouncesLeft > 0)
+		{
+			const auto &Result = ProjectilePathResult.PathData[ProjectilePathResult.PathData.Num() - 1];
+			FVector BounceLocation = Result.Location;
+			FVector HitVelocity = Result.Velocity;
+			FVector MirrorVelocity = HitVelocity.MirrorByVector(ProjectilePathResult.HitResult.Normal);
+	
+			BounceLocation += ProjectilePathResult.HitResult.Normal * 0.1;
+	
+			if (ProjectilePathResult.HitResult.GetComponent()->ComponentHasTag("Bounce"))
+			{
+				FVector BounceActorUpVector = ProjectilePathResult.HitResult.GetActor()->GetActorUpVector();
+				CreateProjectilePreview(BouncesLeft - 1, BounceLocation, ((BounceActorUpVector * 750) + (MirrorVelocity * 1.5)) / 2, true);
+			}
+			else if (ProjectilePathResult.HitResult.GetActor()->ActorHasTag("Pusher"))
+			{
+	
+				AActor* HitActor = ProjectilePathResult.HitResult.GetActor();
+				FVector HitActorLocation = HitActor->GetActorLocation();
+				USceneComponent* ShootPoint = Cast<USceneComponent>(HitActor->GetDefaultSubobjectByName(TEXT("BallShootPoint")));
+				FVector PusherActorForwardVector = ShootPoint->GetUpVector();
+	
+				if (ShootPoint)
+				{
+					BounceLocation = ShootPoint->GetComponentLocation();
+				}
+	
+				CreateProjectilePreview(BouncesLeft - 1, BounceLocation, PusherActorForwardVector * 1000, false);
+			}
+			else
+			{
+				CreateProjectilePreview(BouncesLeft - 1, BounceLocation, MirrorVelocity * 0.65, true);
 			}
 		}
-		return null;
-	}
-
-	//Create the room outline
-	public void CreateRoomOutline(Vector3 position, int roomNumber)
-	{
-		bool exitUp = Physics2D.OverlapCircle(position + new Vector3(0, yOffset), .2f, whatisRoom);
-		bool exitDown = Physics2D.OverlapCircle(position + new Vector3(0, -yOffset), .2f, whatisRoom);
-		bool exitRight = Physics2D.OverlapCircle(position + new Vector3(xOffset, 0), .2f, whatisRoom);
-		bool exitLeft = Physics2D.OverlapCircle(position + new Vector3(-xOffset, 0), .2f, whatisRoom);
-
-		var roomPrefab = PickRoom(exitUp, exitRight, exitDown, exitLeft);
-		if (roomPrefab != null)
-		{
-			var room = Instantiate(roomPrefab.prefab, position, Quaternion.identity, transform);
-			room.GetComponent<Room>().roomNumber = roomNumber;
-			generatedOutlines.Add(room);
-		}
-	}
-}
-
-[System.Serializable]
-public class RoomPrefab
-{
-	public bool exitUp;
-	public bool exitRight;
-	public bool exitDown;
-	public bool exitLeft;
-	public GameObject prefab;
-} </pre>
+	}</pre>
 									</div>
 									</li>
 									</ul>
@@ -583,22 +518,23 @@ public class RoomPrefab
 							<header id="Reincarnation">
 								<br>
 								<div class="inner">
-									<h2><u>Reincarnation mechanic and card elements</u></h2>
+									<h2><u>ToyBox Objects and Tricks</u></h2>
 								</div>
 							</header>
 							<div class="inner">
 
-								<video class="image left" controls src="images/Roguelike/Videos/Reincarnate.mp4"></video>
+								<video class="image left" controls src="images/Basketball/placingobjects.mp4"></video>
 
-								<h3 class="major">Reincarnation
+								<h3 class="major">Toybox Object behaviours
 								</h3>
-								<p>The reincarnation mechanic is what the game is mostly revolves around: when the Player's health becomes 0, instead of a game over, you reincarnate and become stronger. In contrast, when the Player is fully healed they get weaker and can lead to a game over. This means the Player has to find ways of damaging themselves while the enemies attempt to heal them.</p>
-								<p>There are multiple objects the Player can find in the rooms to damage themselves, such as triggering arrows to fire from a statue, to coaxing enemies to fire at uneven structures and causing debris to fall from the ceiling.</p>
+								<p>The ToyBox objects, such as the Bounce Pad and Cannons, are the edge that allows Players to create complex shots and help them win the game. Performing certain tricks like bouncing the ball off the Bounce Pad are tracked using events. If you make a successful shot, the next Players must match the amount of tricks you performed.</p>
+								<p>You can win the game if you can pull off a complex shot with lots of chained tricks that the next players can't match. </p>
 
-								<h3 class="major">Getting stronger with cards
+								<h3 class="major">Picking up and Placing ToyBox Objects
 								</h3>
-								<p>Upon reincarnating, the Player picks between 3 cards which give the Player benefits, such as higher damage output or increased firerate. Better card rarities offer bonuses to these stats. Being fully healed by enemies causes the last aquired card to be destroyed. Being fully healed with no cards causes a game over.</p>
-								<p>The Card Manager takes care of the list of cards aqcuired and cards that appear for the Player to pick from. This includes the Inventory, where you can hover over cards aqcuired to see their stats. The script for the Card itself deals with the information it holds, such as the stats, rarity and ability.</p>
+								<p>To make the game harder over time, every round a Player is allowed to place a new ToyBox Object, which can be rotated and placed in the positioned in an optimal location for performing more tricks. Objects can only be placed if they aren't overlapping other objects or specific "No Place" zones, designed so the game doesn't get softlocked, such as around the hoop and in the spawn area.</p>
+								<p>Calculating the amount of objects overlapping the ToyBox object is done by incremeneting or decrementing a "CurrentOverlappingActors" int variable whenever OnOverlapBegin or OnOverlapEnd is called, which is a low cost method of finding this information. When the value is 0, it can be placed.</p>
+								<p>I also change the collision profile of the objects while grabbing them. Ordinarily the Bounce Pad blocks most objects, which I couldn't have while grabbing it. So while grabbing, the object collision profiles are set to OverlapAllDynamic, and reset to their original collision profiles on release.</p>
 
 								<ul class="actions">
 									<li>
