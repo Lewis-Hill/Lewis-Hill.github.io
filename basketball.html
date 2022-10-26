@@ -528,7 +528,8 @@
 								<h3 class="major">Toybox Object behaviours
 								</h3>
 								<p>The ToyBox objects, such as the Bounce Pad and Cannons, are the edge that allows Players to create complex shots and help them win the game. Performing certain tricks like bouncing the ball off the Bounce Pad are tracked using events. If you make a successful shot, the next Players must match the amount of tricks you performed.</p>
-								<p>You can win the game if you can pull off a complex shot with lots of chained tricks that the next players can't match. </p>
+								<p>You can win the game if you can pull off a complex shot with lots of chained tricks that the next players can't match.</p>
+								<p>There is a general "ToyboxObject" class that contains functionality that all the objects share. For unique behaviours, blueprint subclasses are made for each object, with the bounce of the pad being added as a custom "Bouncer" component for example.</p>
 
 								<h3 class="major">Picking up and Placing ToyBox Objects
 								</h3>
@@ -538,258 +539,142 @@
 
 								<ul class="actions">
 									<li>
-									<button class="button">See Reincarnation Card Code</button>
+									<button class="button">See ToyBox Object Code</button>
 									<div class="codecontent">
-<pre>public class ReincarnationCard : MonoBehaviour
-{
-	public Animator anim;
-
-	public bool isLeft, isRight, isChosen, isCurseCard;
-
-	public RectTransform rectTransform;
-
-	public Text goodEffectText, badEffectText, titleText, cursedText, cursedTextTwo;
-
-	public int damageAmount, healthAmount, healthOnReincarnateAmount, damageTakenIncrease, healAmount, cardRarity;
-	public float fireRateIncrease;
-
-	public Sprite[] cardRarities, cardRaritiesHighlighted;
-	public Sprite cardRarityHighlighted;
-	public GameObject audioManager;
-
-	public enum cardType { damageGivenUpHealthUp, healthDownDamageGivenDown, damageTakenIncreaseHealthUp, fireRateUpDamageDown};
-	public enum curseCardType { takeExtraHeal};
-	public cardType selectedType;
-	public curseCardType selectedCurse;
-
-	// Start is called before the first frame update
-	void Start()
+<pre>#include "ToyboxObject.h"
+	#include "Components/SphereComponent.h"
+	#include "Kismet/GameplayStatics.h"
+	
+	// Sets default values
+	AToyboxObject::AToyboxObject()
 	{
-		audioManager = GameObject.Find("Audio Manager");
-
-		if (!isCurseCard)
+		 // Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+		PrimaryActorTick.bCanEverTick = true;
+	
+		Mesh = CreateDefaultSubobject<UStaticMeshComponent>("Mesh");
+		RootComponent = Mesh;
+	
+		SecondMesh = CreateDefaultSubobject<UStaticMeshComponent>("Second Mesh");
+		SecondMesh->SetupAttachment(Mesh);
+	
+		PlacingSpaceCollider = CreateDefaultSubobject<USphereComponent>("Placing Space Collider");
+		PlacingSpaceCollider->SetupAttachment(Mesh);
+	}
+	
+	// Called when the game starts or when spawned
+	void AToyboxObject::BeginPlay()
+	{
+		Super::BeginPlay();
+	
+		Mesh->OnComponentBeginOverlap.AddDynamic(this, &AToyboxObject::OnOverlapBegin);
+		Mesh->OnComponentEndOverlap.AddDynamic(this, &AToyboxObject::OnOverlapEnd);
+		PlacingSpaceCollider->OnComponentBeginOverlap.AddDynamic(this, &AToyboxObject::OnOverlapBegin);
+		PlacingSpaceCollider->OnComponentEndOverlap.AddDynamic(this, &AToyboxObject::OnOverlapEnd);
+	
+		//Save the original material and collision profile 
+		OriginalMeshMaterial = Mesh->GetMaterial(0);
+		MeshCollisionProfileName = Mesh->GetCollisionProfileName();
+	
+		if (SecondMesh->GetStaticMesh())
 		{
-			cursedText.gameObject.SetActive(false);
-			cursedTextTwo.gameObject.SetActive(false);
-			cardRarity = Random.Range(0, 4);
+			OriginalSecondMeshMaterial = SecondMesh->GetMaterial(0);
+			SecondMeshCollisionProfileName = SecondMesh->GetCollisionProfileName();
+		}
+	}
+	
+	// Called every frame
+	void AToyboxObject::Tick(float DeltaTime)
+	{
+		Super::Tick(DeltaTime);
+	
+		if (ShouldSpin && IsSpinning)
+		{
+			Mesh->AddLocalRotation(SpinRotation);
+		}
+	}
+	
+	void AToyboxObject::SetSpinRotation(FRotator Rotation)
+	{
+		SpinRotation = Rotation;
+	}
+	
+	void AToyboxObject::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+	{
+		//Return if overlappng with other colliders on the actor
+		if (OtherActor == this || OtherActor == UGameplayStatics::GetPlayerPawn(this, 0)) 
+		{
+			return;
+		}
+	
+		CurrentOverlappingActors++;
+	}
+	
+	void AToyboxObject::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+	{
+		//Return if overlappng with other colliders on the actor
+		if (OtherActor == this || OtherActor == UGameplayStatics::GetPlayerPawn(this, 0))
+		{
+			return;
+		}
+	
+		CurrentOverlappingActors--;
+	}
+	
+	void AToyboxObject::SetMaterial(bool IsGrabbing, bool CanPlace)
+	{
+		if (IsGrabbing)
+		{
+			if (CanPlace)
+			{
+				Mesh->SetMaterial(0, CanDropGrabbedMaterial);
+	
+				if (SecondMesh->GetStaticMesh())
+				{
+					SecondMesh->SetMaterial(0, CanDropGrabbedMaterial);
+				}
+			}
+			else
+			{
+				Mesh->SetMaterial(0, CannotDropGrabbedMaterial);
+	
+				if (SecondMesh->GetStaticMesh())
+				{
+					SecondMesh->SetMaterial(0, CannotDropGrabbedMaterial);
+				}
+			}
 		}
 		else
 		{
-			goodEffectText.gameObject.SetActive(false);
-			badEffectText.gameObject.SetActive(false);
-			cardRarity = 4;
+			Mesh->SetMaterial(0, OriginalMeshMaterial);
+	
+			if (SecondMesh->GetStaticMesh())
+			{
+				SecondMesh->SetMaterial(0, OriginalSecondMeshMaterial);
+			}
 		}
-
-		cardRarityHighlighted = cardRaritiesHighlighted[cardRarity];
-
-		gameObject.GetComponent<Image>().sprite = cardRarities[cardRarity];
-
-		if (!isCurseCard)
+	}
+	
+	void AToyboxObject::SetCollision(bool IsGrabbing)
+	{
+		if (IsGrabbing)
 		{
-			selectedType = (cardType)Random.Range(0, 4);
+			Mesh->SetCollisionResponseToAllChannels(ECR_Overlap);
+	
+			if (SecondMesh->GetStaticMesh())
+			{
+				SecondMesh->SetCollisionResponseToAllChannels(ECR_Overlap);
+			}
 		}
 		else
 		{
-			selectedCurse = (curseCardType)(0);
-		}
-
-		//Set the card rarity
-		if (cardRarity == 0)
-		{
-			titleText.text = "Common";
-		}
-		if (cardRarity == 1)
-		{
-			titleText.text = "Rare";
-		}
-		if (cardRarity == 2)
-		{
-			titleText.text = "Epic";
-		}
-		if (cardRarity == 3)
-		{
-			titleText.text = "Legendary";
-		}
-		if (cardRarity == 4)
-		{
-			titleText.text = "Curse";
-		}
-
-		//Set the functionality and text for the various card effects
-		switch (selectedType)
-		{
-			case cardType.damageGivenUpHealthUp:
-				damageAmount = Random.Range(6, 9) + cardRarity;
-				healthAmount = Random.Range(6, 9) - cardRarity;
-				goodEffectText.text = "+" + damageAmount + " damage";
-				badEffectText.text = "+" + healthAmount + " max health";
-				break;
-
-			case cardType.healthDownDamageGivenDown:
-				damageAmount = Random.Range(8, 11) - cardRarity;
-				healthOnReincarnateAmount = Random.Range(8, 11) + cardRarity;
-				goodEffectText.text = "-" + healthOnReincarnateAmount + " health after reincarnate";
-				badEffectText.text = "-" + damageAmount + " damage";
-				break;
-
-			case cardType.damageTakenIncreaseHealthUp:
-				damageTakenIncrease = Random.Range(9, 12) + cardRarity;
-				healthAmount = Random.Range(7, 10) - cardRarity;
-				goodEffectText.text = "+" + damageTakenIncrease + " damage taken from objects";
-				badEffectText.text = "+" + healthAmount + " max health";
-				break;
-
-			case cardType.fireRateUpDamageDown:
-				fireRateIncrease = Random.Range(4, 5) * 0.1f + (cardRarity * 0.1f);
-				damageAmount = Random.Range(7, 10) - cardRarity;
-				goodEffectText.text = "+" + fireRateIncrease + " shots per second";
-				badEffectText.text = "-" + damageAmount + " damage";
-				break;
-		}
-
-		switch (selectedCurse)
-		{
-			case curseCardType.takeExtraHeal:
-				healAmount = 4;
-				cursedText.text = "+" + healAmount + " heal given by enemies";
-				cursedTextTwo.text = "Curse cards cannot be removed";
-				break;
-		}
-	}
-
-	// Update is called once per frame
-	void Update()
-	{
-		if (UIController.instance.isReincarnationCardClicked && !isChosen)
-		{
-			anim.SetBool("isDiscarded", true);
-		}
-	}
-
-	public void Hoverable()
-	{
-		anim.SetBool("isHoverable", true);
-	}
-
-	public void OnMouseHover()
-	{
-		if (anim.GetBool("isHoverable"))
-		{
-			anim.SetBool("isMouseHover", true);
-			//audioManager.GetComponent<AudioManager>().PlaySFX(2);
-		}
-	}
-
-	public void OffMouseHover()
-	{
-		if (anim.GetBool("isMouseHover"))
-		{
-			anim.SetBool("isMouseHover", false);
-		}
-	}
-
-	//When the Player chooses a card, apply the effects 
-	public void OnMouseClick()
-	{
-		if (anim.GetBool("isClickable") && anim != null)
-		{
-			audioManager.GetComponent<AudioManager>().PlaySFX(3);
-			UIController.instance.isReincarnationCardClicked = true;
-			isChosen = true;
-			anim.SetBool("isMouseClick", true);
-			anim.SetBool("isHoverable", false);
-
-			switch (selectedType)
+			Mesh->SetCollisionProfileName(MeshCollisionProfileName);
+	
+			if (SecondMesh->GetStaticMesh())
 			{
-				case cardType.damageGivenUpHealthUp:
-					PlayerController.instance.IncreaseMaxHealth(healthAmount);
-					Gun.instance.IncreaseDamageToGive(damageAmount);
-					break;
-
-				case cardType.healthDownDamageGivenDown:
-					PlayerController.instance.DecreaseHealthOnReincarnation(healthOnReincarnateAmount);
-					Gun.instance.IncreaseDamageToGive(-damageAmount);
-					PlayerController.instance.IncreaseMaxHealth(0);
-					break;
-
-				case cardType.damageTakenIncreaseHealthUp:
-					PlayerController.instance.IncreaseDamageTaken(damageTakenIncrease);
-					PlayerController.instance.IncreaseMaxHealth(healthAmount);
-					break;
-
-				case cardType.fireRateUpDamageDown:
-					Gun.instance.IncreaseFireRate(fireRateIncrease);
-					Gun.instance.IncreaseDamageToGive(-damageAmount);
-					PlayerController.instance.IncreaseMaxHealth(0);
-					break;
+				SecondMesh->SetCollisionProfileName(SecondMeshCollisionProfileName);
 			}
-
-			switch (selectedCurse)
-			{
-				case curseCardType.takeExtraHeal:
-					PlayerController.instance.IncreaseHealToTake(healAmount);
-					PlayerController.instance.IncreaseMaxHealth(0);
-					break;
-			}
-
-			CardManager.instance.Equip(this);
-
-			anim.SetBool("isClickable", false); 
-
-			Debug.Log("Click!");
 		}
-	}
-
-	//Reverse the card effects if destroyed
-	public void OnRemove()
-	{
-		audioManager.GetComponent<AudioManager>().LoudenMusic();
-
-		//Remove the stats and set current health to OnReinarncateHealth and Unpause the game
-		switch (selectedType)
-		{
-			case cardType.damageGivenUpHealthUp:
-				PlayerController.instance.IncreaseMaxHealth(-healthAmount);
-				Gun.instance.IncreaseDamageToGive(-damageAmount);
-				break;
-
-			case cardType.healthDownDamageGivenDown:
-				PlayerController.instance.DecreaseHealthOnReincarnation(-healthOnReincarnateAmount);
-				Gun.instance.IncreaseDamageToGive(damageAmount);
-				PlayerController.instance.IncreaseMaxHealth(0);
-				break;
-
-			case cardType.damageTakenIncreaseHealthUp:
-				PlayerController.instance.IncreaseDamageTaken(-damageTakenIncrease);
-				PlayerController.instance.IncreaseMaxHealth(-healthAmount);
-				break;
-
-			case cardType.fireRateUpDamageDown:
-				Gun.instance.IncreaseFireRate(-fireRateIncrease);
-				Gun.instance.IncreaseDamageToGive(damageAmount);
-				PlayerController.instance.IncreaseMaxHealth(0);
-				break;
-		}
-
-		switch (selectedCurse)
-		{
-			case curseCardType.takeExtraHeal:
-				PlayerController.instance.IncreaseHealToTake(-healAmount);
-				PlayerController.instance.IncreaseMaxHealth(0);
-				break;
-		}
-
-		PlayerController.instance.currentHealth = PlayerController.instance.onReincarnateHealth;
-		GameManager.instance.UnpauseGame();
-		PlayerController.instance.isDeincarnated = false;
-		PlayerController.instance.ActivateInvincibility(2f);
-	}
-
-	public void PlaySound()
-	{
-		audioManager.GetComponent<AudioManager>().PlaySFX(2);
-	}
-}</pre>
+	}</pre>
 									</div>
 									</li>
 									</ul>
