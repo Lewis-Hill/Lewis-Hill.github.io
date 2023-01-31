@@ -65,16 +65,128 @@
 								<p>If you're being picked up as the ball, your camera will change to face where-ever that Player is looking, but this can be overriden by moving your mouse. You can also reevert back to not being the ball, even if you're being picked up.'</p>
 
 								<h3 class="major">Multiplayer code structuring</h3>
-								<p>The biggest challenge was understanding how to structure my code for a multiplayer game. I learned about RPCs so that the Server is in charge of calling important functions for the client like throwing the ball. Because of this, lots of components and variables had to be replicated so clients could see. Simulated and autonomous proxys were also something I learned about.</p>
+								<p>The biggest challenge was understanding how to structure my code for a multiplayer game. I learned about RPCs so that the Server is in charge of calling important functions for the client like throwing the ball, and even for delegates like when the Player overlaps with the Ball "pick up" range. Because of this, lots of components and variables had to be replicated so clients could see. Simulated and autonomous proxys were also something I learned about.</p>
 								<p>Learning which variables and functions are already replicated in Unreal was also useful to figure out, as well as when it is appropriate to call a function locally, and how animation blueprints should be set up.</p>
 								<p>This project uses the Online Steam Subsystem to connect to other Players, using the test dev ID. This meant for testing purposes, aslong as someone had Steam open, they could connect to my game.</p>
 
+								<h3 class="major">Code</h3>
+								<p>I have attached the Ball class code to showcase some of the Multiplayer specific functionality. Please contact me if you wish to see some more examples.</p>
+
 								<ul class="actions">
 									<li>
-									<button class="button">See Grabber Code</button>
+									<button class="button">See Ball Code</button>
 									<div class="codecontent">
 											
-<pre></pre>
+<pre>#include "Ball.h"
+#include "Components/SphereComponent.h"
+#include "Components/WidgetComponent.h"
+#include "BallPartyGame/Character/BallPartyCharacter.h"
+#include "Net/UnrealNetwork.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "DrawDebugHelpers.h"
+
+ABall::ABall()
+{
+	PrimaryActorTick.bCanEverTick = true;
+
+	BallMesh = CreateDefaultSubobject<UStaticMeshComponent>("BallMesh");
+	SetRootComponent(BallMesh);
+
+	PickUpCollider = CreateDefaultSubobject<USphereComponent>("PickUpCollider");
+	PickUpCollider->SetupAttachment(RootComponent);
+
+	PickUpWidget = CreateDefaultSubobject<UWidgetComponent>("PickUpWidget");
+	PickUpWidget->SetupAttachment(RootComponent);
+}
+
+void ABall::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ABall, BallState);
+}
+
+void ABall::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (HasAuthority())
+	{
+		PickUpCollider->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnSphereBeginOverlap);
+		PickUpCollider->OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnSphereEndOverlap);
+	}
+	if (PickUpWidget)
+	{
+		PickUpWidget->SetVisibility(false);
+	}
+}
+
+void ABall::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+}
+
+void ABall::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	ABallPartyCharacter* BallPartyCharacter = Cast<ABallPartyCharacter>(OtherActor);
+
+	if (PickUpWidget && BallPartyCharacter && !BallPartyCharacter->GetEquipped())
+	{
+		BallPartyCharacter->SetOverlappingBall(this);
+	}
+}
+
+void ABall::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	ABallPartyCharacter* BallPartyCharacter = Cast<ABallPartyCharacter>(OtherActor);
+
+	if (PickUpWidget && BallPartyCharacter)
+	{
+		BallPartyCharacter->SetOverlappingBall(nullptr);
+	}
+}
+
+void ABall::OnRep_BallState()
+{
+	SetBallStateBehaviour();
+}
+
+void ABall::SetBallState(EBallState NewBallState)
+{
+	BallState = NewBallState;
+
+	SetBallStateBehaviour();
+}
+
+void ABall::SetBallStateBehaviour()
+{
+	switch (BallState)
+	{
+	case EBallState::EBS_Equipped:
+
+		BallMesh->SetSimulatePhysics(false);
+		ShowPickupWidget(false);
+		PickUpCollider->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		BallMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+		break;
+
+	case EBallState::EBS_Unequipped:
+
+		BallMesh->SetSimulatePhysics(true);
+		PickUpCollider->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		BallMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+		BallMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+		break;
+	}
+}
+
+void ABall::ShowPickupWidget(bool bShow)
+{
+	if (PickUpWidget)
+	{
+		PickUpWidget->SetVisibility(bShow);
+	}
+}</pre>
 									</div>
 									</li>
 									</ul>
