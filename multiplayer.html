@@ -43,7 +43,12 @@
 
 				<!-- Wrapper -->
 					<section id="wrapper">
-
+						<header id="Top">
+								<div class="inner">
+									<h2 class="align-center">Online Multiplayer Demo (C++ UE5)</h2>
+									<p class="align-center">This is an Online Multiplayer demo in which you can connect to your friends and throw and catch balls. The twist is that you can become a ball yourself! You can be picked up by your friend and thrown too. This is a work in progress project, currently containing only the base gameplay.</p>
+								</div>
+							</header>
 						<!-- Movement -->
 						<div class="wrapper style3">
 							<header id="Overview">
@@ -54,7 +59,12 @@
 							</header>
 							<div class="inner">
 								<video class="image left" controls src="images/Multiplayer/17-01-23 Test.mp4"></video>			
-								<h3 class="major">Ball Control</h3>
+								<h3 class="major">Be the Ball</h3>
+								<p>By adding a PhysicsHandle Component on the Player and creating a cusotm "Grabber" class, I was able to add the functionality of picking up and throwing the ball. The Grabber checks against a custom trace channel to see if any valid objects are within grabbing distance. The PhysicsHandle deals with grabbing the object. In Tick, the location of the grabbed object is updated.</p>
+								<p>When the ball is thrown, it is released from the PhysicsHandle and an impulse is added to it. By holding down the Throw button before releasing, more power is added to the impulse. I added a shake to the ball using a Vector Timeline to add small offsets to the ball while the throw is charging up.</p>
+								<p>The springy feel of the ball while it's grabbed is achieved by altering some of the values found on the PhysicsHandle.</p>
+
+								<h3 class="major">Multiplayer code structuring</h3>
 								<p>By adding a PhysicsHandle Component on the Player and creating a cusotm "Grabber" class, I was able to add the functionality of picking up and throwing the ball. The Grabber checks against a custom trace channel to see if any valid objects are within grabbing distance. The PhysicsHandle deals with grabbing the object. In Tick, the location of the grabbed object is updated.</p>
 								<p>When the ball is thrown, it is released from the PhysicsHandle and an impulse is added to it. By holding down the Throw button before releasing, more power is added to the impulse. I added a shake to the ball using a Vector Timeline to add small offsets to the ball while the throw is charging up.</p>
 								<p>The springy feel of the ball while it's grabbed is achieved by altering some of the values found on the PhysicsHandle.</p>
