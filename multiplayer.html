@@ -65,8 +65,8 @@
 								<p>If you're being picked up as the ball, your camera will change to face where-ever that Player is looking, but this can be overriden by moving your mouse. You can also reevert back to not being the ball, even if you're being picked up.'</p>
 
 								<h3 class="major">Multiplayer code structuring</h3>
-								<p>One of the challenges of this project so far </p>
-								<p>When the ball is thrown, it is released from the PhysicsHandle and an impulse is added to it. By holding down the Throw button before releasing, more power is added to the impulse. I added a shake to the ball using a Vector Timeline to add small offsets to the ball while the throw is charging up.</p>
+								<p>The biggest challenge was understanding how to structure my code for a multiplayer game. I learned about RPCs so that the Server is in charge of calling important functions for the client like throwing the ball. Because of this, lots of components and variables had to be replicated so clients could see. Simulated and autonomous proxys were also something I learned about.</p>
+								<p>Others included "OnRep" functions </p>
 								<p>The springy feel of the ball while it's grabbed is achieved by altering some of the values found on the PhysicsHandle.</p>
 
 								<ul class="actions">
