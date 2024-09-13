@@ -45,7 +45,7 @@
 					<section id="wrapper">
 						<header id="Top">
 								<div class="inner">
-									<h2 class="align-center">DELETERewind System (C++ UE5) - 2024</h2>
+									<h2 class="align-center">Rewind System (C++ UE5) - 2024</h2>
 									<p class="align-center">This is a Rewind System made for a prototype of a track-placing puzzle game I'm working on. It encourages retrying a level by rewinding back to the start. I designed this to be a mechanic that can easily be expanded and implemented to future objects that wish to make use of it.</p>
 								</div>
 							</header>
@@ -58,7 +58,7 @@
 								</div>
 							</header>
 							<div class="inner">
-								<video class="align-center" controls src="images/Rewind/RewindMechanic.mp4"></video>
+								<video class="image center" controls src="images/Rewind/RewindMechanic.mp4"></video>
 								<h3 class="major">Game Time Interface</h3>
 								<p>My goal for this mechanic was making it expandable and maintainable, so that it will be easy to add rewind funtionality to future features. I achieved this by creating the "IGameTimeInterface", which can be implemented to allow data to be recorded and then retrieved when desired. I've intentionally omitted any use of the word Rewind as this Interface could be used for other purposes where we want data to be stored to retrieve again later.</p>
 								<p>Using an interface allowed me to add rewind functionality to systems that have nothing in common, such as Player Animations, placed Track Actors, and the TrainMovementComponent. As seen in the code below, the Interface class is very simple, as it is up to the classes that implement it to provide the data they wish to record during game time, to then retrieve again during rewind.</p>
