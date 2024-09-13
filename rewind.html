@@ -1,0 +1,223 @@
+<!DOCTYPE HTML>
+<!--
+	Solid State by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Rewind System</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Page Wrapper -->
+			<div id="page-wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<h1><a href="index.html">Lewis Hill</a></h1>
+						<nav>
+							<a href="#menu">Menu</a>
+						</nav>
+					</header>
+
+				<!-- Menu -->
+					<nav id="menu">
+						<div class="inner">
+							<h2>Menu</h2>
+							<ul class="links">
+								<li><a href="index.html">Home</a></li>
+								<li><a href="multiplayer.html">Online Multiplayer demo</a></li>
+								<li><a href="basketball.html">HORSE (Basketball Party Game)</a></li>
+								<li><a href="inventory.html">Inventory System</a></li>
+								<li><a href="roguelike.html">Procedural Roguelike</a></li>
+								<li><a href="gamejam.html">Climax Game Jam</a></li>
+							</ul>
+							<a href="#" class="close">Close</a>
+						</div>
+					</nav>
+
+				<!-- Wrapper -->
+					<section id="wrapper">
+						<header id="Top">
+								<div class="inner">
+									<h2 class="align-center">Online Multiplayer Demo (C++ UE5)</h2>
+									<p class="align-center">This is an Online Multiplayer demo in which you can connect to your friends and throw and catch balls. The twist is that you can become a ball yourself! You can be picked up by your friend and thrown too. This is a work in progress project, currently containing only the base gameplay.</p>
+								</div>
+							</header>
+						<!-- Movement -->
+						<div class="wrapper style3">
+							<header id="Overview">
+								<br>
+								<div class="inner">
+									<h2><u>Overview</u></h2>
+								</div>
+							</header>
+							<div class="inner">
+								<video class="image left" controls src="images/Multiplayer/17-01-23 Test.mp4"></video>			
+								<h3 class="major">Be the Ball</h3>
+								<p>When Ctrl is pressed, the Player curls into a ball and can roll around, and be picked up by another Player. What is actually happening is an invisible instance of the ball class is spawned, and the Player is attached to this ball.</p>
+								<p>This ball is actually a derived class of the ball class called "transform ball", allowing it to be distinguished from other balls and having some unique funtionality like being able to store who picked it up, who owns it etc.</p>
+								<p>If you're being picked up as the ball, your camera will change to face where-ever that Player is looking, but this can be overriden by moving your mouse. You can also reevert back to not being the ball, even if you're being picked up.'</p>
+
+								<h3 class="major">Multiplayer code structuring</h3>
+								<p>The biggest challenge was understanding how to structure my code for a multiplayer game. I learned about RPCs so that the Server is in charge of calling important functions for the client like throwing the ball, and even for delegates like when the Player overlaps with the Ball "pick up" range. Because of this, lots of components and variables had to be replicated so clients could see. Simulated and autonomous proxys were also something I learned about.</p>
+								<p>Learning which variables and functions are already replicated in Unreal was also useful to figure out, as well as when it is appropriate to call a function locally, and how animation blueprints should be set up.</p>
+								<p>This project uses the Online Steam Subsystem to connect to other Players, using the test dev ID. This meant for testing purposes, aslong as someone had Steam open, they could connect to my game.</p>
+
+								<h3 class="major">Code</h3>
+								<p>I have attached the Ball class code to showcase some of the Multiplayer specific functionality. Please contact me if you wish to see some more examples.</p>
+
+								<ul class="actions">
+									<li>
+									<button class="button">See Ball Code</button>
+									<div class="codecontent">
+											
+<pre>#include "Ball.h"
+#include "Components/SphereComponent.h"
+#include "Components/WidgetComponent.h"
+#include "BallPartyGame/Character/BallPartyCharacter.h"
+#include "Net/UnrealNetwork.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "DrawDebugHelpers.h"
+
+ABall::ABall()
+{
+	PrimaryActorTick.bCanEverTick = true;
+
+	BallMesh = CreateDefaultSubobject<UStaticMeshComponent>("BallMesh");
+	SetRootComponent(BallMesh);
+
+	PickUpCollider = CreateDefaultSubobject<USphereComponent>("PickUpCollider");
+	PickUpCollider->SetupAttachment(RootComponent);
+
+	PickUpWidget = CreateDefaultSubobject<UWidgetComponent>("PickUpWidget");
+	PickUpWidget->SetupAttachment(RootComponent);
+}
+
+void ABall::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ABall, BallState);
+}
+
+void ABall::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (HasAuthority())
+	{
+		PickUpCollider->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnSphereBeginOverlap);
+		PickUpCollider->OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnSphereEndOverlap);
+	}
+	if (PickUpWidget)
+	{
+		PickUpWidget->SetVisibility(false);
+	}
+}
+
+void ABall::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+}
+
+void ABall::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	ABallPartyCharacter* BallPartyCharacter = Cast<ABallPartyCharacter>(OtherActor);
+
+	if (PickUpWidget && BallPartyCharacter && !BallPartyCharacter->GetEquipped())
+	{
+		BallPartyCharacter->SetOverlappingBall(this);
+	}
+}
+
+void ABall::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	ABallPartyCharacter* BallPartyCharacter = Cast<ABallPartyCharacter>(OtherActor);
+
+	if (PickUpWidget && BallPartyCharacter)
+	{
+		BallPartyCharacter->SetOverlappingBall(nullptr);
+	}
+}
+
+void ABall::OnRep_BallState()
+{
+	SetBallStateBehaviour();
+}
+
+void ABall::SetBallState(EBallState NewBallState)
+{
+	BallState = NewBallState;
+
+	SetBallStateBehaviour();
+}
+
+void ABall::SetBallStateBehaviour()
+{
+	switch (BallState)
+	{
+	case EBallState::EBS_Equipped:
+
+		BallMesh->SetSimulatePhysics(false);
+		ShowPickupWidget(false);
+		PickUpCollider->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		BallMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+		break;
+
+	case EBallState::EBS_Unequipped:
+
+		BallMesh->SetSimulatePhysics(true);
+		PickUpCollider->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		BallMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+		BallMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+		break;
+	}
+}
+
+void ABall::ShowPickupWidget(bool bShow)
+{
+	if (PickUpWidget)
+	{
+		PickUpWidget->SetVisibility(bShow);
+	}
+}</pre>
+									</div>
+									</li>
+									</ul>
+
+								<ul class="actions">
+									<li><a href="#Top" class="button primary">Jump to top</a></li>
+								</ul>
+								
+							</div>
+						</div>
+					</section>
+
+				<!-- Footer -->
+					<section class="wrapper style3">
+						<div class="inner">
+						<ul class="contact">
+							<li class="icon solid fa-envelope"><a href="mailto: lewishill81@gmail.com" target="_blank">lewishill81@gmail.com</a></li>
+							<li class="icon brands fa-linkedin"><a href="https://www.linkedin.com/in/lewis-hill-200425195/" target="_blank">Linkedin</a></li>
+						</ul>
+						</div>
+					</section>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
