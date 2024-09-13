@@ -60,17 +60,17 @@
 							</header>
 							<div class="inner">
 								<video class="image left" controls src="images/Multiplayer/17-01-23 Test.mp4"></video>			
-								<h3 class="major">Be the Ball</h3>
-								<p>When Ctrl is pressed, the Player curls into a ball and can roll around, and be picked up by another Player. What is actually happening is an invisible instance of the ball class is spawned, and the Player is attached to this ball.</p>
-								<p>This ball is actually a derived class of the ball class called "transform ball", allowing it to be distinguished from other balls and having some unique funtionality like being able to store who picked it up, who owns it etc.</p>
-								<p>If you're being picked up as the ball, your camera will change to face where-ever that Player is looking, but this can be overriden by moving your mouse. You can also reevert back to not being the ball, even if you're being picked up.'</p>
+								<h3 class="major">Game Time Interface</h3>
+								<p>My goal for this mechanic was making it expandable and maintainable, so that it will be easy to add rewind funtionality to future features. I achieved this by creating the "IGameTimeInterface", which can be implemented to allow data to be recorded and then retrieved during rewind. Using an interface allowed me to add rewind functionality to systems that have nothing in common, such as Player animations, placed tracks, and trains.'</p>
+								<p>I then created the UGameTimeSubsystem, which manages and tracks all the Interfaces by storing all the data and then giving it back during rewind. The systems that implement the Interface can then use the data accordingly. For example, the train uses the data to set its Transform, speed and MovementMode.</p>
+								<p>The systems that implement the Interface require different data, for example the Player's animations don't need to store a Transform, but the Train object does. For this I made use of Unreal's FInstancedStructs to abstract the data type when recording data for the Interface. Once retrieved, the system can access the base struct, such as FTrainGameTimeData for the TrainMovementComponent.'</p>
 
-								<h3 class="major">Multiplayer code structuring</h3>
+								<h3 class="major">Game Time Subsystem</h3>
 								<p>The biggest challenge was understanding how to structure my code for a multiplayer game. I learned about RPCs so that the Server is in charge of calling important functions for the client like throwing the ball, and even for delegates like when the Player overlaps with the Ball "pick up" range. Because of this, lots of components and variables had to be replicated so clients could see. Simulated and autonomous proxys were also something I learned about.</p>
 								<p>Learning which variables and functions are already replicated in Unreal was also useful to figure out, as well as when it is appropriate to call a function locally, and how animation blueprints should be set up.</p>
 								<p>This project uses the Online Steam Subsystem to connect to other Players, using the test dev ID. This meant for testing purposes, aslong as someone had Steam open, they could connect to my game.</p>
 
-								<h3 class="major">Code</h3>
+								<h3 class="major">FInstancedStructs</h3>
 								<p>I have attached the Ball class code to showcase some of the Multiplayer specific functionality. Please contact me if you wish to see some more examples.</p>
 
 								<ul class="actions">
