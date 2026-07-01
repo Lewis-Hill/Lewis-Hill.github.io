@@ -1,0 +1,464 @@
+<!DOCTYPE HTML>
+<!--
+	Solid State by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Rewind System</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Page Wrapper -->
+			<div id="page-wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<h1><a href="index.html">Lewis Hill</a></h1>
+						<nav>
+							<a href="#menu">Menu</a>
+						</nav>
+					</header>
+
+				<!-- Menu -->
+					<nav id="menu">
+						<div class="inner">
+							<h2>Menu</h2>
+							<ul class="links">
+								<li><a href="index.html">Home</a></li>
+								<li><a href="rewind.html">Rewind System</a></li>
+								<li><a href="multiplayer.html">Online Multiplayer demo</a></li>
+								<li><a href="basketball.html">HORSE (Basketball Party Game)</a></li>
+								<li><a href="roguelike.html">Procedural Roguelike</a></li>
+								<li><a href="gamejam.html">Climax Game Jam</a></li>
+							</ul>
+							<a href="#" class="close">Close</a>
+						</div>
+					</nav>
+
+				<!-- Wrapper -->
+					<section id="wrapper">
+						<header id="Top">
+								<div class="inner">
+									<h2 class="align-center">Rewind System (C++ UE5) - 2024</h2>
+									<p class="align-center">This is a Rewind System made for a prototype of a track-placing puzzle game I'm working on. It encourages retrying a level by rewinding back to the start. I designed this to be a mechanic that can easily be expanded and implemented to future objects that wish to make use of it.</p>
+								</div>
+							</header>
+						<!-- Movement -->
+						<div class="wrapper style3">
+							<header id="Overview">
+								<br>
+								<div class="inner">
+									<h2><u>Overview</u></h2>
+								</div>
+							</header>
+							<div class="inner">
+								<video class="image left" controls src="images/Rewind/RewindMechanic.mp4"></video>
+								<h3 class="major">Game Time Interface</h3>
+								<p>My goal for this mechanic was making it expandable and maintainable, so that it will be easy to add rewind funtionality to future features. I achieved this by creating the "IGameTimeInterface", which can be implemented to allow data to be recorded and then retrieved when desired. I've intentionally omitted any use of the word Rewind as this Interface could be used for other purposes where we want data to be stored to retrieve again later.</p>
+								<p>Using an interface allowed me to add rewind functionality to systems that have nothing in common, such as Player Animations, placed Track Actors, and the TrainMovementComponent. As seen in the code below, the Interface class is very simple, as it is up to the classes that implement it to provide the data they wish to record during game time, to then retrieve again during rewind.</p>
+
+								<ul class="actions">
+									<li>
+										<button class="button">GameTimeInterface.h code</button>
+										<div class="codecontent">
+<pre>#pragma once
+
+#include "CoreMinimal.h"
+
+#include "UObject/Interface.h"
+
+#include "InstancedStruct.h"
+
+#include "GameTimeInterface.generated.h"
+
+/**
+ * 
+ */
+UINTERFACE()
+class TRAINGAME2_API UGameTimeInterface : public UInterface
+{
+	GENERATED_BODY()
+};
+
+class TRAINGAME2_API IGameTimeInterface
+{
+	GENERATED_BODY()
+
+public:
+	virtual FInstancedStruct& RecordData() = 0;
+	virtual void RetrieveData(const FInstancedStruct& DataToRetrieve) = 0;
+};</pre>
+										</div>
+									</li>
+								</ul>
+
+								<h3 class="major">Game Time Subsystem</h3>
+								<p>I then created the UGameTimeSubsystem, which manages and tracks all the Interfaces by storing all the data and then giving it back during rewind. The systems that implement the Interface can then use the data accordingly. For example, the train uses the data to set its Transform, speed and MovementMode.</p>
+								<p>As shown in the UI for the video above, there is a rolling window of 10 seconds where rewind can be used. The subsystem also ensures that any data captured outside of this range is removed, preventing the stored data from becoming too large.</p>
+
+								<ul class="actions">
+									<li>
+										<button class="button">GameTimeSubsystem.h code</button>
+										<div class="codecontent">
+<pre>#pragma once
+
+#include "CoreMinimal.h"
+
+#include "Subsystems/WorldSubsystem.h"
+
+#include "GameTime/GameTimeInterface.h"
+
+#include "GameTimeSubsystem.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FRewindStateChangedDelegate);
+
+USTRUCT()
+struct FGameTimeData
+{
+	GENERATED_BODY()
+
+	float TimeStamp = 0.f;
+
+	UPROPERTY(Transient)
+	TArray<TScriptInterface<IGameTimeInterface>> Interfaces;
+
+	UPROPERTY(Transient)
+	TArray<FInstancedStruct> Data;
+
+	FGameTimeData(float InTimeStamp)
+	{
+		TimeStamp = InTimeStamp;
+	}
+
+	FGameTimeData() {}
+};
+
+UCLASS(Config = Game, defaultconfig, meta = (DisplayName = "Game Time Subsystem Settings"))
+class TRAINGAME2_API UGameTimeSubsystemSettings : public UDeveloperSettings
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly)
+	float m_MaxElapsedTime;
+
+	UPROPERTY(Config, EditAnywhere)
+	FRuntimeFloatCurve StartRewindCurve;
+
+	UPROPERTY(Config, EditAnywhere)
+	FRuntimeFloatCurve EndRewindCurve;
+
+	UGameTimeSubsystemSettings() {}
+};
+
+/**
+ *
+ */
+UCLASS()
+class TRAINGAME2_API UGameTimeSubsystem : public UTickableWorldSubsystem
+{
+	GENERATED_BODY()
+
+public:
+	UGameTimeSubsystem();
+
+	UFUNCTION(BlueprintCallable)
+	void StartRewind();
+
+	UFUNCTION(BlueprintCallable)
+	void EndRewind();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	float GetCurrentTime() const { return m_CurrentTime; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	float GetEarliestRecordedTime() const { return m_EarliestRecordedTime; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	bool IsTimeRewinding() const { return m_bIsRewinding; }
+
+	void RegisterGameTimeInterface(TScriptInterface<IGameTimeInterface> Interface);
+	void DeregisterGameTimeInterface(TScriptInterface<IGameTimeInterface> Interface);
+
+	// FTickableGameObject implementation Begin
+	virtual TStatId GetStatId() const override;
+	virtual void Tick(float DeltaTime) override;
+	// FTickableGameObject implementation End
+
+	// USubsystem implementation Begin
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual void Deinitialize() override;
+	// USubsystem implementation End
+
+public:
+	UPROPERTY(BlueprintAssignable)
+	FRewindStateChangedDelegate OnRewindStartedDelegate;
+
+	UPROPERTY(BlueprintAssignable)
+	FRewindStateChangedDelegate OnRewindEndedDelegate;
+
+private:
+	void IncrementGameTime(float DeltaTime);
+	void Rewind(float DeltaTime);
+
+private:
+	float m_MaxElapsedTime = 10.f;
+	float m_CurrentTime = 0.f;
+	float m_EarliestRecordedTime = 0.f;
+
+	FRuntimeFloatCurve m_StartRewindCurve;
+	FRuntimeFloatCurve m_EndRewindCurve;
+
+	UPROPERTY(Transient)
+	TArray<FGameTimeData> m_GameTimeData;
+
+	UPROPERTY(Transient)
+	TArray<TScriptInterface<IGameTimeInterface>> m_GameTimeInterfaces;
+
+	bool m_bIsRewinding = false;
+};</pre>
+										</div>
+									</li>
+								</ul>
+
+								<ul class="actions">
+									<li>
+										<button class="button">GameTimeSubsystem.cpp code</button>
+										<div class="codecontent">
+<pre>#include "GameTime/GameTimeSubsystem.h"
+
+#include "Kismet/GameplayStatics.h"
+
+UGameTimeSubsystem::UGameTimeSubsystem()
+{
+
+}
+
+void UGameTimeSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+
+	const UGameTimeSubsystemSettings* SubsystemSettings = GetDefault<UGameTimeSubsystemSettings>();
+	m_StartRewindCurve = SubsystemSettings->StartRewindCurve;
+	m_EndRewindCurve = SubsystemSettings->EndRewindCurve;
+	m_MaxElapsedTime = SubsystemSettings->m_MaxElapsedTime;
+}
+
+void UGameTimeSubsystem::Deinitialize()
+{
+	m_GameTimeData.Empty();
+	m_GameTimeInterfaces.Empty();
+
+	Super::Deinitialize();
+}
+
+void UGameTimeSubsystem::RegisterGameTimeInterface(TScriptInterface<IGameTimeInterface> Interface)
+{
+	if (Interface && !m_GameTimeInterfaces.Contains(Interface))
+	{
+		m_GameTimeInterfaces.Add(Interface);
+	}
+}
+
+void UGameTimeSubsystem::DeregisterGameTimeInterface(TScriptInterface<IGameTimeInterface> Interface)
+{
+	m_GameTimeInterfaces.Remove(Interface);
+}
+
+void UGameTimeSubsystem::StartRewind()
+{
+	m_bIsRewinding = true;
+
+	OnRewindStartedDelegate.Broadcast();
+}
+
+void UGameTimeSubsystem::EndRewind()
+{
+	// Any data after the current time should be removed
+	for (int Index = m_GameTimeData.Num() - 1; Index >= 0; Index--)
+	{
+		if (m_GameTimeData[Index].TimeStamp > m_CurrentTime)
+		{
+			m_GameTimeData.RemoveAt(Index);
+		}
+	}
+
+	m_bIsRewinding = false;
+
+	OnRewindEndedDelegate.Broadcast();
+}
+
+TStatId UGameTimeSubsystem::GetStatId() const
+{
+	RETURN_QUICK_DECLARE_CYCLE_STAT(UGameTimeSubsystem, STATGROUP_Tickables);
+}
+
+void UGameTimeSubsystem::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (m_bIsRewinding)
+	{
+		Rewind(DeltaTime);
+	}
+	else
+	{
+		IncrementGameTime(DeltaTime);
+	}
+}
+
+void UGameTimeSubsystem::IncrementGameTime(float DeltaTime)
+{
+	if (UGameplayStatics::GetGlobalTimeDilation(this) < 1.f)
+	{
+		return;
+	}
+
+	m_CurrentTime += DeltaTime;
+
+	FGameTimeData NewGameTimeData(m_CurrentTime);
+
+	float StartTimeLost = 0.f;
+	float EndTimeLost = 0.f;
+
+	float NewEarliestRecordedTime = m_CurrentTime - m_MaxElapsedTime;
+	if (NewEarliestRecordedTime > m_EarliestRecordedTime)
+	{
+		StartTimeLost = m_EarliestRecordedTime;
+		EndTimeLost = NewEarliestRecordedTime;
+		m_EarliestRecordedTime = NewEarliestRecordedTime;
+	}
+
+	if (StartTimeLost != 0.f || EndTimeLost != 0.f)
+	{
+		for (int Index = m_GameTimeData.Num() - 1; Index >= 0; Index--)
+		{
+			if (m_GameTimeData[Index].TimeStamp >= StartTimeLost && m_GameTimeData[Index].TimeStamp < EndTimeLost)
+			{
+				m_GameTimeData.RemoveAt(Index);
+			}
+		}
+	}
+
+	for (TScriptInterface<IGameTimeInterface> Interface : m_GameTimeInterfaces)
+	{
+		if (Interface)
+		{
+			FInstancedStruct InterfaceData = Interface->RecordData();
+			NewGameTimeData.Interfaces.Add(Interface);
+			NewGameTimeData.Data.Add(InterfaceData);
+		}
+		else
+		{
+			DeregisterGameTimeInterface(Interface);
+		}
+	}
+
+	m_GameTimeData.Add(NewGameTimeData);
+}
+
+void UGameTimeSubsystem::Rewind(float DeltaTime)
+{
+	m_CurrentTime -= DeltaTime;
+
+	if (m_CurrentTime <= m_EarliestRecordedTime)
+	{
+		EndRewind();
+	}
+
+	if (m_GameTimeData.IsEmpty())
+	{
+		return;
+	}
+
+	const FGameTimeData* DataToRetrieveFrom = &m_GameTimeData[0];
+
+	// Find data with a timestamp closest to the current time
+	float ClosestTimeStampOffsetFromCurrentTime = 100.f;
+	for (const FGameTimeData& Data : m_GameTimeData)
+	{	
+		float Offset = FMath::Abs(Data.TimeStamp - m_CurrentTime);
+		if (Offset < ClosestTimeStampOffsetFromCurrentTime)
+		{
+			ClosestTimeStampOffsetFromCurrentTime = Offset;
+			DataToRetrieveFrom = &Data;
+		}
+	}
+
+	const TArray<TScriptInterface<IGameTimeInterface>>& InterfacesToUpdate = DataToRetrieveFrom->Interfaces;
+	const TArray<FInstancedStruct>& InterfaceData = DataToRetrieveFrom->Data;
+
+	for (int32 Index = 0; Index < InterfacesToUpdate.Num(); Index++)
+	{
+		if (DataToRetrieveFrom->Data.IsValidIndex(Index))
+		{
+			DataToRetrieveFrom->Interfaces[Index]->RetrieveData(InterfaceData[Index]);
+		}
+	}
+}</pre>
+										</div>
+									</li>
+								</ul>
+
+								<h3 class="major">FInstancedStructs</h3>
+								<p>The systems that implement the IGameTimeInterface require different data: for example, the Player's animations don't need to store a Transform, but the TrainMovementComponent does. For this I made use of Unreal's FInstancedStructs to abstract the data type when recording data for the Interface, so they all take the same type of FInstancedStruct. Once retrieved, the system can access the base struct from this, such as FTrainGameTimeData for the TrainMovementComponent.</p>
+
+								<ul class="actions">
+									<li>
+										<button class="button">TrainMovementComponent retrieving data</button>
+										<div class="codecontent">
+<pre>void UTrainMovementComponent::RetrieveData(const FInstancedStruct& DataToRetrieve)
+{
+	if (const FTrainGameTimeData* GameTimeData = DataToRetrieve.GetPtr<FTrainGameTimeData>())
+	{
+		if (AActor* Owner = GetOwner())
+		{
+			Owner->SetActorLocationAndRotation(GameTimeData->TrainLocation, GameTimeData->TrainRotation);
+			SetDistanceAlongAttachedTrack(GameTimeData->DistanceAlongAttachedTrack);
+
+			m_CurrentSpeed = GameTimeData->CurrentSpeed;
+			m_CurrentMovementMode = GameTimeData->MovementMode;
+			m_VelocityToSetOnRewindEnd = GameTimeData->Velocity;
+		}
+	}
+}</pre>
+										</div>
+									</li>
+								</ul>
+
+								<ul class="actions">
+									<li><a href="#Top" class="button primary">Jump to top</a></li>
+								</ul>
+
+							</div>
+						</div>
+					</section>
+
+				<!-- Footer -->
+					<section class="wrapper style3">
+						<div class="inner">
+						<ul class="contact">
+							<li class="icon solid fa-envelope"><a href="mailto: lewishill.dev@gmail.com" target="_blank">lewishill81@gmail.com</a></li>
+							<li class="icon brands fa-linkedin"><a href="https://www.linkedin.com/in/lewis-hill-200425195/" target="_blank">Linkedin</a></li>
+						</ul>
+						</div>
+					</section>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
