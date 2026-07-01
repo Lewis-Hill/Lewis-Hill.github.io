@@ -66,46 +66,7 @@
 
 								<ul class="actions">
 									<li>
-										<button class="button">GameTimeInterface.h code</button>
-										<div class="codecontent">
-<pre>#pragma once
-
-#include "CoreMinimal.h"
-
-#include "UObject/Interface.h"
-
-#include "InstancedStruct.h"
-
-#include "GameTimeInterface.generated.h"
-
-/**
- * 
- */
-UINTERFACE()
-class TRAINGAME2_API UGameTimeInterface : public UInterface
-{
-	GENERATED_BODY()
-};
-
-class TRAINGAME2_API IGameTimeInterface
-{
-	GENERATED_BODY()
-
-public:
-	virtual FInstancedStruct& RecordData() = 0;
-	virtual void RetrieveData(const FInstancedStruct& DataToRetrieve) = 0;
-};</pre>
-										</div>
-									</li>
-								</ul>
-
-								<h3 class="major">Game Time Subsystem</h3>
-								<p>I then created the UGameTimeSubsystem, which manages and tracks all the Interfaces by storing all the data and then giving it back during rewind. The systems that implement the Interface can then use the data accordingly. For example, the train uses the data to set its Transform, speed and MovementMode.</p>
-								<p>As shown in the UI for the video above, there is a rolling window of 10 seconds where rewind can be used. The subsystem also ensures that any data captured outside of this range is removed, preventing the stored data from becoming too large.</p>
-
-								<ul class="actions">
-									<li>
-										<button class="button">GameTimeSubsystem.h code</button>
+										<button class="button">Interact Interface code</button>
 										<div class="codecontent">
 <pre>using UnityEngine;
 
@@ -121,205 +82,158 @@ public interface IInteractInterface
 
 								<ul class="actions">
 									<li>
-										<button class="button">GameTimeSubsystem.cpp code</button>
+										<button class="button">Pickup class code</button>
 										<div class="codecontent">
-<pre>#include "GameTime/GameTimeSubsystem.h"
+<pre>using UnityEngine;
 
-#include "Kismet/GameplayStatics.h"
-
-UGameTimeSubsystem::UGameTimeSubsystem()
+public class Pickup : MonoBehaviour, IInteractInterface
 {
-
+    public bool CanInteract(GameObject interactor)
+    {
+        PickUpThrow pickUpThrow = interactor.GetComponentInChildren<PickUpThrow>();
+        return pickUpThrow != null && pickUpThrow.ActivePickup == null;
+    }
+    public void Interact(GameObject interactor)
+    {
+        PickUpThrow pickUpThrow = interactor.GetComponentInChildren<PickUpThrow>();
+        if (pickUpThrow != null)
+        {
+            pickUpThrow.Pickup(gameObject);
+        }
+    }
 }
-
-void UGameTimeSubsystem::Initialize(FSubsystemCollectionBase& Collection)
-{
-	Super::Initialize(Collection);
-
-	const UGameTimeSubsystemSettings* SubsystemSettings = GetDefault<UGameTimeSubsystemSettings>();
-	m_StartRewindCurve = SubsystemSettings->StartRewindCurve;
-	m_EndRewindCurve = SubsystemSettings->EndRewindCurve;
-	m_MaxElapsedTime = SubsystemSettings->m_MaxElapsedTime;
-}
-
-void UGameTimeSubsystem::Deinitialize()
-{
-	m_GameTimeData.Empty();
-	m_GameTimeInterfaces.Empty();
-
-	Super::Deinitialize();
-}
-
-void UGameTimeSubsystem::RegisterGameTimeInterface(TScriptInterface<IGameTimeInterface> Interface)
-{
-	if (Interface && !m_GameTimeInterfaces.Contains(Interface))
-	{
-		m_GameTimeInterfaces.Add(Interface);
-	}
-}
-
-void UGameTimeSubsystem::DeregisterGameTimeInterface(TScriptInterface<IGameTimeInterface> Interface)
-{
-	m_GameTimeInterfaces.Remove(Interface);
-}
-
-void UGameTimeSubsystem::StartRewind()
-{
-	m_bIsRewinding = true;
-
-	OnRewindStartedDelegate.Broadcast();
-}
-
-void UGameTimeSubsystem::EndRewind()
-{
-	// Any data after the current time should be removed
-	for (int Index = m_GameTimeData.Num() - 1; Index >= 0; Index--)
-	{
-		if (m_GameTimeData[Index].TimeStamp > m_CurrentTime)
-		{
-			m_GameTimeData.RemoveAt(Index);
-		}
-	}
-
-	m_bIsRewinding = false;
-
-	OnRewindEndedDelegate.Broadcast();
-}
-
-TStatId UGameTimeSubsystem::GetStatId() const
-{
-	RETURN_QUICK_DECLARE_CYCLE_STAT(UGameTimeSubsystem, STATGROUP_Tickables);
-}
-
-void UGameTimeSubsystem::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	if (m_bIsRewinding)
-	{
-		Rewind(DeltaTime);
-	}
-	else
-	{
-		IncrementGameTime(DeltaTime);
-	}
-}
-
-void UGameTimeSubsystem::IncrementGameTime(float DeltaTime)
-{
-	if (UGameplayStatics::GetGlobalTimeDilation(this) < 1.f)
-	{
-		return;
-	}
-
-	m_CurrentTime += DeltaTime;
-
-	FGameTimeData NewGameTimeData(m_CurrentTime);
-
-	float StartTimeLost = 0.f;
-	float EndTimeLost = 0.f;
-
-	float NewEarliestRecordedTime = m_CurrentTime - m_MaxElapsedTime;
-	if (NewEarliestRecordedTime > m_EarliestRecordedTime)
-	{
-		StartTimeLost = m_EarliestRecordedTime;
-		EndTimeLost = NewEarliestRecordedTime;
-		m_EarliestRecordedTime = NewEarliestRecordedTime;
-	}
-
-	if (StartTimeLost != 0.f || EndTimeLost != 0.f)
-	{
-		for (int Index = m_GameTimeData.Num() - 1; Index >= 0; Index--)
-		{
-			if (m_GameTimeData[Index].TimeStamp >= StartTimeLost && m_GameTimeData[Index].TimeStamp < EndTimeLost)
-			{
-				m_GameTimeData.RemoveAt(Index);
-			}
-		}
-	}
-
-	for (TScriptInterface<IGameTimeInterface> Interface : m_GameTimeInterfaces)
-	{
-		if (Interface)
-		{
-			FInstancedStruct InterfaceData = Interface->RecordData();
-			NewGameTimeData.Interfaces.Add(Interface);
-			NewGameTimeData.Data.Add(InterfaceData);
-		}
-		else
-		{
-			DeregisterGameTimeInterface(Interface);
-		}
-	}
-
-	m_GameTimeData.Add(NewGameTimeData);
-}
-
-void UGameTimeSubsystem::Rewind(float DeltaTime)
-{
-	m_CurrentTime -= DeltaTime;
-
-	if (m_CurrentTime <= m_EarliestRecordedTime)
-	{
-		EndRewind();
-	}
-
-	if (m_GameTimeData.IsEmpty())
-	{
-		return;
-	}
-
-	const FGameTimeData* DataToRetrieveFrom = &m_GameTimeData[0];
-
-	// Find data with a timestamp closest to the current time
-	float ClosestTimeStampOffsetFromCurrentTime = 100.f;
-	for (const FGameTimeData& Data : m_GameTimeData)
-	{	
-		float Offset = FMath::Abs(Data.TimeStamp - m_CurrentTime);
-		if (Offset < ClosestTimeStampOffsetFromCurrentTime)
-		{
-			ClosestTimeStampOffsetFromCurrentTime = Offset;
-			DataToRetrieveFrom = &Data;
-		}
-	}
-
-	const TArray<TScriptInterface<IGameTimeInterface>>& InterfacesToUpdate = DataToRetrieveFrom->Interfaces;
-	const TArray<FInstancedStruct>& InterfaceData = DataToRetrieveFrom->Data;
-
-	for (int32 Index = 0; Index < InterfacesToUpdate.Num(); Index++)
-	{
-		if (DataToRetrieveFrom->Data.IsValidIndex(Index))
-		{
-			DataToRetrieveFrom->Interfaces[Index]->RetrieveData(InterfaceData[Index]);
-		}
-	}
-}</pre>
+</pre>
 										</div>
 									</li>
 								</ul>
 
-								<h3 class="major">FInstancedStructs</h3>
-								<p>The systems that implement the IGameTimeInterface require different data: for example, the Player's animations don't need to store a Transform, but the TrainMovementComponent does. For this I made use of Unreal's FInstancedStructs to abstract the data type when recording data for the Interface, so they all take the same type of FInstancedStruct. Once retrieved, the system can access the base struct from this, such as FTrainGameTimeData for the TrainMovementComponent.</p>
-
 								<ul class="actions">
 									<li>
-										<button class="button">TrainMovementComponent retrieving data</button>
+										<button class="button">Interactor class code</button>
 										<div class="codecontent">
-<pre>void UTrainMovementComponent::RetrieveData(const FInstancedStruct& DataToRetrieve)
-{
-	if (const FTrainGameTimeData* GameTimeData = DataToRetrieve.GetPtr<FTrainGameTimeData>())
-	{
-		if (AActor* Owner = GetOwner())
-		{
-			Owner->SetActorLocationAndRotation(GameTimeData->TrainLocation, GameTimeData->TrainRotation);
-			SetDistanceAlongAttachedTrack(GameTimeData->DistanceAlongAttachedTrack);
+<pre>using NUnit.Framework;
+using StarterAssets;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UIElements;
 
-			m_CurrentSpeed = GameTimeData->CurrentSpeed;
-			m_CurrentMovementMode = GameTimeData->MovementMode;
-			m_VelocityToSetOnRewindEnd = GameTimeData->Velocity;
-		}
-	}
-}</pre>
+public class Interactor : MonoBehaviour
+{
+    [SerializeField]
+    private float lookingAtInteractableMaxAngle = 30f;
+
+    private List<Interactable> overlappedInteractables = new List<Interactable>();
+    private Interactable currentPotentialInteractable;
+
+    public void OnEnable()
+    {
+        StarterAssetsInputs.OnInteractEvent += OnInteractEvent;
+    }
+
+    public void OnDisable()
+    {
+        StarterAssetsInputs.OnInteractEvent -= OnInteractEvent;
+        currentPotentialInteractable = null;
+    }
+
+    public void Update()
+    {
+        if (overlappedInteractables.Count == 0)
+        {
+            return;
+        }
+
+        Vector3 interactorPos = Camera.main.transform.position;
+        float bestDistance = -1f;
+        Interactable bestInteractable = null;
+        foreach (Interactable interactable in overlappedInteractables)
+        {
+            Vector3 interactablePos = interactable.transform.position;
+            float interactableDistance = Vector3.Distance(interactorPos, interactable.transform.position);
+            IInteractInterface interactInterface = interactable.GetComponent<IInteractInterface>();
+
+            bool lookingAtInteractable = Vector3.Angle(Camera.main.transform.forward, interactablePos - interactorPos) <= lookingAtInteractableMaxAngle;
+            if (lookingAtInteractable && interactInterface.CanInteract(gameObject) && (bestDistance == -1f || interactableDistance < bestDistance))
+            {
+                bestDistance = interactableDistance;
+                bestInteractable = interactable;
+            }
+        }
+
+        if (bestInteractable && bestInteractable != currentPotentialInteractable)
+        {
+            if (currentPotentialInteractable)
+            {
+                currentPotentialInteractable.SetPotentialInteractionEnabled(false);
+            }
+
+            currentPotentialInteractable = bestInteractable;
+            bestInteractable.SetPotentialInteractionEnabled(true);
+        }
+    }
+
+    private void OnInteractEvent()
+    {
+        if (currentPotentialInteractable == null)
+        {
+            return;
+        }
+
+        currentPotentialInteractable.GetComponent<IInteractInterface>().Interact(gameObject);
+        currentPotentialInteractable.SetPotentialInteractionEnabled(false);
+        currentPotentialInteractable = null;
+    }
+
+    public void OnTriggerEnter(Collider other)
+    {
+        if (!other.CompareTag("Interact"))
+        {
+            return;
+        }
+
+        GameObject otherGameobject = other.gameObject;
+        IInteractInterface otherInteractInterface = otherGameobject.GetComponentInParent<IInteractInterface>();
+        Interactable interactable = otherGameobject.GetComponentInParent<Interactable>();
+
+        if (otherInteractInterface == null || interactable == null || !otherInteractInterface.CanInteract(gameObject))
+        {
+            Assert.IsNotNull(otherInteractInterface, "Interactable parent %s does not implement the Interact Interface!", otherGameobject.name);
+            return;
+        }
+
+        if (!overlappedInteractables.Contains(interactable))
+        {
+            overlappedInteractables.Add(interactable);
+        }
+    }
+
+    public void OnTriggerExit(Collider other)
+    {
+        if (!other.CompareTag("Interact"))
+        {
+            return;
+        }
+
+        Interactable interactable = other.gameObject.GetComponentInParent<Interactable>();
+        if (interactable == null)
+        {
+            return;
+        }
+
+        if (interactable == currentPotentialInteractable)
+        {
+            interactable.SetPotentialInteractionEnabled(false);
+            currentPotentialInteractable = null;
+        }
+
+        if (overlappedInteractables.Contains(interactable))
+        {
+            overlappedInteractables.Remove(interactable);
+        }
+    }
+}
+
+</pre>
 										</div>
 									</li>
 								</ul>
