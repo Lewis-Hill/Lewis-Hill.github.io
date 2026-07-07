@@ -57,17 +57,17 @@
 									<h2><u>Overview</u></h2>
 								</div>
 							</header>
-							<div class="inner">
-								<video class="image left" controls src="images/Unity/Interact.mp4"></video>
-								<h3 class="major">Interact Interface</h3>
-								<p>By making an Interact Interface, it would allow any class that implements it to define their own behaviours for when an interaction happens, and what conditions must be met. There are Pickups, that the player can only hold one at a time. There are also buttons that shoot fireworks, that can still be activated even while holding an object. I also added an interactable component for shared functionality, including the outline that all interactable objects have.</p>
-								<p>The interactor keeps a list of all the interactable objects and will add and remove them based on the OnTriggerEnter and OnTriggerExit events. This ensures that once an object is thrown, any other objects we are overlapping with can immediately become eligible for interaction again.</p>
-								<p>This was a fun challenge! Since I work on a custom engine at work, and am making my own game in UE5, it's good to be able to transfer my skills back to Unity, which I used to make a lot of my projects in.</p>
+                            <div class="inner">
+                                <video class="image fit" controls src="images/Unity/Interact.mp4"></video>
+                                <h3 class="major">Interact Interface</h3>
+                                <p>By making an Interact Interface, it would allow any class that implements it to define their own behaviours for when an interaction happens, and what conditions must be met. There are Pickups, that the player can only hold one at a time. There are also buttons that shoot fireworks, that can still be activated even while holding an object. I also added an interactable component for shared functionality, including the outline that all interactable objects have.</p>
+                                <p>The interactor keeps a list of all the interactable objects and will add and remove them based on the OnTriggerEnter and OnTriggerExit events. This ensures that once an object is thrown, any other objects we are overlapping with can immediately become eligible for interaction again.</p>
+                                <p>This was a fun challenge! Since I work on a custom engine at work, and am making my own game in UE5, it's good to be able to transfer my skills back to Unity, which I used to make a lot of my projects in.</p>
 
-								<ul class="actions">
-									<li>
-										<button class="button">Interact Interface code</button>
-										<div class="codecontent">
+                                <ul class="actions">
+                                    <li>
+                                        <button class="button">Interact Interface code</button>
+                                        <div class="codecontent">
 <pre>using UnityEngine;
 
 public interface IInteractInterface
@@ -76,14 +76,14 @@ public interface IInteractInterface
     void Interact(GameObject interactor) { }
 }
 </pre>
-										</div>
-									</li>
-								</ul>
+                                        </div>
+                                    </li>
+                                </ul>
 
-								<ul class="actions">
-									<li>
-										<button class="button">Pickup class code</button>
-										<div class="codecontent">
+                                <ul class="actions">
+                                    <li>
+                                        <button class="button">Pickup class code</button>
+                                        <div class="codecontent">
 <pre>using UnityEngine;
 
 public class Pickup : MonoBehaviour, IInteractInterface
@@ -103,14 +103,14 @@ public class Pickup : MonoBehaviour, IInteractInterface
     }
 }
 </pre>
-										</div>
-									</li>
-								</ul>
+                                        </div>
+                                    </li>
+                                </ul>
 
-								<ul class="actions">
-									<li>
-										<button class="button">Interactor class code</button>
-										<div class="codecontent">
+                                <ul class="actions">
+                                    <li>
+                                        <button class="button">Interactor class code</button>
+                                        <div class="codecontent">
 <pre>using NUnit.Framework;
 using StarterAssets;
 using System.Collections.Generic;
@@ -234,15 +234,24 @@ public class Interactor : MonoBehaviour
 }
 
 </pre>
-										</div>
-									</li>
-								</ul>
+                                        </div>
+                                    </li>
+                                </ul>
 
-								<ul class="actions">
-									<li><a href="#Top" class="button primary">Jump to top</a></li>
-								</ul>
+                                <video class="image fit" controls src="images/Unity/Npcmethod.mp4"></video>
+                                <h3 class="major">UE5 - NPCs and Explosions</h3>
+                                <p>Back to UE5 and my track placing adventure game! Recently I've been focusing on NPCs and their behaviours. You're able to start dialogue with them and make choices that will lead to them either following you, or asking them to move to a location on Nav Mesh.</p>
+                                <p>The cool part is that if you tell them where to go, they will build tracks in order to get there! My aim is to create companions with different abilities that will aide you on your journey, aswell as dialogue options that are locked behind prerequisites.</p>
 
-							</div>
+                                <video class="image fit" controls src="images/Unity/Bombmethod.mp4"></video>
+                                <p>However there are other options... If you blow up tracks with a bomb, the other track pieces will fall and connect to make a bridge! I like the idea of having multiple options to solve a challenge. You don't always have to rely on NPCs!'</p>
+                                <p>This is the result of a refactor I've done to the tracks to make them modular. Each piece is now one actor as opposed to one actor comprised of multiple spline points. It was an interesting challenge to apply the fix to existing tracks in my levels!</p>
+
+                                <ul class="actions">
+                                    <li><a href="#Top" class="button primary">Jump to top</a></li>
+                                </ul>
+
+                            </div>
 						</div>
 					</section>
 
